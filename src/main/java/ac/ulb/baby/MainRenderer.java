@@ -1,5 +1,6 @@
 package ac.ulb.baby;
 
+import ac.ulb.enums.*;
 import com.jogamp.opengl.*;
 import com.jogamp.opengl.awt.GLJPanel;
 import com.jogamp.opengl.fixedfunc.GLLightingFunc;
@@ -12,6 +13,8 @@ import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.TextureData;
 import com.jogamp.opengl.util.texture.TextureIO;
 
+import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -33,8 +36,15 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     private Texture uterusTexture;
     private Texture uterusBump;
 
+    static int angleX = 0;
+    static int angleY = 0;
+    static int angleZ = 0;
+
     public MainRenderer() {
         this.addGLEventListener(this);
+
+        initInputMap();
+        initActionMap();
     }
 
     @Override
@@ -69,8 +79,8 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         GL2 gl = drawable.getGL().getGL2();
         gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
 
-        setCamera(drawable, 100);
-
+        updateCameraDistance(drawable, 100);
+        updateRotations(drawable);
         drawSphere(drawable, glu, 10, 32, 32);
     }
 
@@ -81,7 +91,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         gl.glViewport(0, 0, width, height);
     }
 
-    private void setCamera(GLAutoDrawable drawable, float distance) {
+    private void updateCameraDistance(GLAutoDrawable drawable, float distance) {
         GL2 gl = drawable.getGL().getGL2();
 
         gl.glMatrixMode(GLMatrixFunc.GL_PROJECTION);
@@ -121,10 +131,6 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         program = shaderProgram.program();
 
-        /**
-         These links don't go into effect until you link the program. If you want
-         to change index, you need to link the program again.
-         */
         gl.glBindAttribLocation(program, 0, "position");
         gl.glBindAttribLocation(program, 3, "color");
         gl.glBindFragDataLocation(program, 0, "outputColor");
@@ -145,6 +151,13 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         throw new RuntimeException("Error when loading texture " + path);
     }
 
+    private void updateRotations(GLAutoDrawable drawable) {
+        GL2 gl = drawable.getGL().getGL2();
+        gl.glRotatef(angleZ, 0, 0, 1);
+        gl.glRotatef(angleY, 0, 1, 0);
+        gl.glRotatef(angleX, 1, 0, 0);
+    }
+
     private void drawSphere(GLAutoDrawable drawable, GLU glu, int radius, int slices, int stacks) {
         GL2 gl = drawable.getGL().getGL2();
 
@@ -162,5 +175,95 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         glu.gluQuadricOrientation(sphere, GLU.GLU_OUTSIDE);
         glu.gluSphere(sphere, radius, slices, stacks);
         glu.gluDeleteQuadric(sphere);
+    }
+
+    private void initInputMap() {
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.LOWER_X.key()), ActionEnum.LESS_ANGLE_X.action());
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.UPPER_X.key()), ActionEnum.PLUS_ANGLE_X.action());
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.LOWER_Y.key()), ActionEnum.LESS_ANGLE_Y.action());
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.UPPER_Y.key()), ActionEnum.PLUS_ANGLE_Y.action());
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.LOWER_Z.key()), ActionEnum.LESS_ANGLE_Z.action());
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.UPPER_Z.key()), ActionEnum.PLUS_ANGLE_Z.action());
+    }
+
+    private void initActionMap() {
+        this.getActionMap().put(ActionEnum.LESS_ANGLE_X.action(), new ActionLessAngleX());
+        this.getActionMap().put(ActionEnum.PLUS_ANGLE_X.action(), new ActionPlusAngleX());
+        this.getActionMap().put(ActionEnum.LESS_ANGLE_Y.action(), new ActionLessAngleY());
+        this.getActionMap().put(ActionEnum.PLUS_ANGLE_Y.action(), new ActionPlusAngleY());
+        this.getActionMap().put(ActionEnum.LESS_ANGLE_Z.action(), new ActionLessAngleZ());
+        this.getActionMap().put(ActionEnum.PLUS_ANGLE_Z.action(), new ActionPlusAngleZ());
+    }
+
+    private static class ActionLessAngleX extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            angleX -= 5;
+            if (angleX < 0) {
+                angleX += 360;
+            }
+            System.out.println("angleX = " + angleX);
+        }
+    }
+
+    private static class ActionPlusAngleX extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            angleX += 5;
+            if (angleX > 360) {
+                angleX -= 360;
+            }
+            System.out.println("angleX = " + angleX);
+        }
+    }
+
+    private static class ActionLessAngleY extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            angleY -= 5;
+            if (angleY < 0) {
+                angleY += 360;
+            }
+            System.out.println("angleY = " + angleY);
+        }
+    }
+
+    private static class ActionPlusAngleY extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            angleY += 5;
+            if (angleY > 360) {
+                angleY -= 360;
+            }
+            System.out.println("angleY = " + angleY);
+        }
+    }
+
+    private static class ActionLessAngleZ extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            angleZ -= 5;
+            if (angleZ < 0) {
+                angleZ += 360;
+            }
+            System.out.println("angleZ = " + angleZ);
+        }
+    }
+
+    private static class ActionPlusAngleZ extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            angleZ += 5;
+            if (angleZ > 360) {
+                angleZ -= 360;
+            }
+            System.out.println("angleZ = " + angleZ);
+        }
     }
 }
