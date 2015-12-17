@@ -40,6 +40,10 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     static int angleY = 0;
     static int angleZ = 0;
 
+    static int distX = 0;
+    static int distY = 0;
+    static int distZ = 100;
+
     public MainRenderer() {
         this.addGLEventListener(this);
 
@@ -79,7 +83,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         GL2 gl = drawable.getGL().getGL2();
         gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
 
-        updateCameraDistance(drawable, 100);
+        updateCamera(drawable);
         updateRotations(drawable);
         drawSphere(drawable, glu, 10, 32, 32);
     }
@@ -91,7 +95,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         gl.glViewport(0, 0, width, height);
     }
 
-    private void updateCameraDistance(GLAutoDrawable drawable, float distance) {
+    private void updateCamera(GLAutoDrawable drawable) {
         GL2 gl = drawable.getGL().getGL2();
 
         gl.glMatrixMode(GLMatrixFunc.GL_PROJECTION);
@@ -99,7 +103,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         float aspect = (float) getWidth() / (float) getHeight();
         glu.gluPerspective(45, aspect, 1, 1000);
-        glu.gluLookAt(0, 0, distance, 0, 0, 0, 0, 1, 0);
+        glu.gluLookAt(distX, distY, distZ, distX, distY, 0, 0, 1, 0);
 
         gl.glMatrixMode(GLMatrixFunc.GL_MODELVIEW);
         gl.glLoadIdentity();
@@ -178,21 +182,60 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     }
 
     private void initInputMap() {
+        // Rotations : Xx Yy Zz
+        // Xx
         this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.LOWER_X.key()), ActionEnum.LESS_ANGLE_X.action());
         this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.UPPER_X.key()), ActionEnum.PLUS_ANGLE_X.action());
+        // Yy
         this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.LOWER_Y.key()), ActionEnum.LESS_ANGLE_Y.action());
         this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.UPPER_Y.key()), ActionEnum.PLUS_ANGLE_Y.action());
+        // Zz
         this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.LOWER_Z.key()), ActionEnum.LESS_ANGLE_Z.action());
         this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.UPPER_Z.key()), ActionEnum.PLUS_ANGLE_Z.action());
+
+        // Translations : Left Right Up Down
+        // LEFT L l
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.LEFT.key()), ActionEnum.LESS_DIST_X.action());
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.UPPER_L.key()), ActionEnum.LESS_DIST_X.action());
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.LOWER_L.key()), ActionEnum.LESS_DIST_X.action());
+        // RIGHT R r
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.RIGHT.key()), ActionEnum.PLUS_DIST_X.action());
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.UPPER_R.key()), ActionEnum.PLUS_DIST_X.action());
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.LOWER_R.key()), ActionEnum.PLUS_DIST_X.action());
+        // UP U u
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.UP.key()), ActionEnum.PLUS_DIST_Y.action());
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.UPPER_U.key()), ActionEnum.PLUS_DIST_Y.action());
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.LOWER_U.key()), ActionEnum.PLUS_DIST_Y.action());
+        // DOWN D d
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.DOWN.key()), ActionEnum.LESS_DIST_Y.action());
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.UPPER_D.key()), ActionEnum.LESS_DIST_Y.action());
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.LOWER_D.key()), ActionEnum.LESS_DIST_Y.action());
+
+        // Zoom : In Out
+        // I i
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.UPPER_I.key()), ActionEnum.LESS_DIST_Z.action());
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.LOWER_I.key()), ActionEnum.LESS_DIST_Z.action());
+        // O o
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.UPPER_O.key()), ActionEnum.PLUS_DIST_Z.action());
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.LOWER_O.key()), ActionEnum.PLUS_DIST_Z.action());
     }
 
     private void initActionMap() {
+        // Angles
         this.getActionMap().put(ActionEnum.LESS_ANGLE_X.action(), new ActionLessAngleX());
         this.getActionMap().put(ActionEnum.PLUS_ANGLE_X.action(), new ActionPlusAngleX());
         this.getActionMap().put(ActionEnum.LESS_ANGLE_Y.action(), new ActionLessAngleY());
         this.getActionMap().put(ActionEnum.PLUS_ANGLE_Y.action(), new ActionPlusAngleY());
         this.getActionMap().put(ActionEnum.LESS_ANGLE_Z.action(), new ActionLessAngleZ());
         this.getActionMap().put(ActionEnum.PLUS_ANGLE_Z.action(), new ActionPlusAngleZ());
+
+        // Distances
+        this.getActionMap().put(ActionEnum.LESS_DIST_X.action(), new ActionLessDistX());
+        this.getActionMap().put(ActionEnum.PLUS_DIST_X.action(), new ActionPlusDistX());
+        this.getActionMap().put(ActionEnum.LESS_DIST_Y.action(), new ActionLessDistY());
+        this.getActionMap().put(ActionEnum.PLUS_DIST_Y.action(), new ActionPlusDistY());
+        this.getActionMap().put(ActionEnum.LESS_DIST_Z.action(), new ActionLessDistZ());
+        this.getActionMap().put(ActionEnum.PLUS_DIST_Z.action(), new ActionPlusDistZ());
     }
 
     private static class ActionLessAngleX extends AbstractAction {
@@ -203,7 +246,6 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
             if (angleX < 0) {
                 angleX += 360;
             }
-            System.out.println("angleX = " + angleX);
         }
     }
 
@@ -215,7 +257,6 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
             if (angleX > 360) {
                 angleX -= 360;
             }
-            System.out.println("angleX = " + angleX);
         }
     }
 
@@ -227,7 +268,6 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
             if (angleY < 0) {
                 angleY += 360;
             }
-            System.out.println("angleY = " + angleY);
         }
     }
 
@@ -239,7 +279,6 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
             if (angleY > 360) {
                 angleY -= 360;
             }
-            System.out.println("angleY = " + angleY);
         }
     }
 
@@ -251,7 +290,6 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
             if (angleZ < 0) {
                 angleZ += 360;
             }
-            System.out.println("angleZ = " + angleZ);
         }
     }
 
@@ -263,7 +301,54 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
             if (angleZ > 360) {
                 angleZ -= 360;
             }
-            System.out.println("angleZ = " + angleZ);
+        }
+    }
+
+    private static class ActionLessDistX extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            distX -= 1;
+        }
+    }
+
+    private static class ActionPlusDistX extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            distX += 1;
+        }
+    }
+
+    private static class ActionLessDistY extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            distY -= 1;
+        }
+    }
+
+    private static class ActionPlusDistY extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            distY += 1;
+        }
+    }
+
+    private static class ActionLessDistZ extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            distZ -= 5;
+        }
+    }
+
+    private static class ActionPlusDistZ extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            distZ += 5;
         }
     }
 }

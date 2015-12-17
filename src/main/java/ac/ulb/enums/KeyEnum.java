@@ -7,16 +7,24 @@ public enum KeyEnum {
     UPPER_I("shift I"),
     LOWER_L("L"),
     UPPER_L("shift L"),
-    LOWER_R("R"),
-    UPPER_R("shift R"),
     LOWER_O("O"),
     UPPER_O("shift O"),
+    LOWER_R("R"),
+    UPPER_R("shift R"),
+    LOWER_U("U"),
+    UPPER_U("shift U"),
     LOWER_X("X"),
     UPPER_X("shift X"),
     LOWER_Y("Y"),
     UPPER_Y("shift Y"),
     LOWER_Z("Z"),
-    UPPER_Z("shift Z");
+    UPPER_Z("shift Z"),
+
+    LEFT("LEFT"),
+    RIGHT("RIGHT"),
+    UP("UP"),
+    DOWN("DOWN")
+    ;
 
     private String keyString;
 
