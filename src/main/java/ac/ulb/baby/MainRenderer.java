@@ -14,7 +14,7 @@ import com.jogamp.opengl.util.texture.TextureData;
 import com.jogamp.opengl.util.texture.TextureIO;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
+import java.awt.event.*;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -28,27 +28,36 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private static final int NBR_TEXTURE = 1;
 
-    private int[] textures = new int[NBR_TEXTURE];
-
     private int program;
-
     private GLU glu;
     private Texture uterusTexture;
     private Texture uterusBump;
 
-    static int angleX = 0;
-    static int angleY = 0;
-    static int angleZ = 0;
+    static float angleX = 0;
+    static float angleY = 0;
+    static float angleZ = 0;
 
     static int distX = 0;
     static int distY = 0;
     static int distZ = 100;
+
+    private boolean mouseFirstPressed = false;
+    private boolean mouseSecondPressed = false;
+
+    private int prevMouseX;
+    private int prevMouseY;
 
     public MainRenderer() {
         this.addGLEventListener(this);
 
         initInputMap();
         initActionMap();
+
+        MouseHandler mouseHandler = new MouseHandler();
+
+        this.addMouseListener(mouseHandler);
+        this.addMouseMotionListener(mouseHandler);
+        this.addMouseWheelListener(mouseHandler);
     }
 
     @Override
@@ -349,6 +358,57 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             distZ += 5;
+        }
+    }
+
+    private class MouseHandler extends MouseAdapter {
+
+        @Override
+        public void mousePressed(final MouseEvent e) {
+            if (SwingUtilities.isLeftMouseButton(e)) {
+                mouseFirstPressed = true;
+            }
+            if (SwingUtilities.isRightMouseButton(e)) {
+                mouseSecondPressed = true;
+            }
+        }
+
+        @Override
+        public void mouseReleased(final MouseEvent e) {
+            if (SwingUtilities.isLeftMouseButton(e)) {
+                mouseFirstPressed = false;
+            }
+            if (SwingUtilities.isRightMouseButton(e)) {
+                mouseSecondPressed = false;
+            }
+        }
+
+        @Override
+        public void mouseMoved(final MouseEvent e) {
+            prevMouseX = e.getX();
+            prevMouseY = e.getY();
+        }
+
+        @Override
+        public void mouseDragged(final MouseEvent e) {
+            int x = e.getX();
+            int y = e.getY();
+            if (mouseFirstPressed) {
+                distX += prevMouseX - x;
+                distY += y - prevMouseY;
+            } else if (mouseSecondPressed) {
+                float thetaY = 360 * (x - prevMouseX) / getWidth();
+                float thetaX = 360 * (y - prevMouseY) / getHeight();
+                angleX += thetaX;
+                angleY += thetaY;
+            }
+            prevMouseX = x;
+            prevMouseY = y;
+        }
+
+        @Override
+        public void mouseWheelMoved(final MouseWheelEvent e) {
+            distZ += e.getWheelRotation() * 5;
         }
     }
 }
