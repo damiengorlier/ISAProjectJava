@@ -41,15 +41,15 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     static float angleY = 0;
     static float angleZ = 0;
 
-    static int distX = 0;
-    static int distY = 0;
-    static int distZ = 100;
+    static float distX = 0;
+    static float distY = 0;
+    static float distZ = 100;
 
     private boolean mouseFirstPressed = false;
     private boolean mouseSecondPressed = false;
 
-    private int prevMouseX;
-    private int prevMouseY;
+    private float prevMouseX;
+    private float prevMouseY;
 
     public MainRenderer() {
         this.addGLEventListener(this);
@@ -439,11 +439,11 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void mouseDragged(final MouseEvent e) {
-            int x = e.getX();
-            int y = e.getY();
+            float x = e.getX();
+            float y = e.getY();
             if (mouseFirstPressed) {
-                distX += prevMouseX - x;
-                distY += y - prevMouseY;
+                distX += (prevMouseX - x) / 10;
+                distY += (y - prevMouseY) / 10;
             } else if (mouseSecondPressed) {
                 float thetaY = 360 * (x - prevMouseX) / getWidth();
                 float thetaX = 360 * (y - prevMouseY) / getHeight();
