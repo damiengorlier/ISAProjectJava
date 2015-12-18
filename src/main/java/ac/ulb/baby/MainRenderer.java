@@ -12,6 +12,7 @@ import com.jogamp.opengl.util.glsl.ShaderProgram;
 import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.TextureData;
 import com.jogamp.opengl.util.texture.TextureIO;
+import com.momchil_atanasov.data.front.parser.*;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -24,14 +25,17 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     private static final String UTERUS_TEXTURE_PATH = TEXTURES_ROOT + "/" + "uterus_text.png";
     private static final String UTERUS_BUMP_PATH = TEXTURES_ROOT + "/" + "uterus_bump.png";
 
-    private static final String SHADERS_ROOT = "/shaders";
+    private static final String MODEL_ROOT = "/model";
+    private static final String BABY_MODEL_OBJ_PATH = MODEL_ROOT + "/baby_original_triangles.obj";
 
-    private static final int NBR_TEXTURE = 1;
+    private static final String SHADERS_ROOT = "/shaders";
 
     private int program;
     private GLU glu;
     private Texture uterusTexture;
     private Texture uterusBump;
+
+    private OBJModel modelBaby;
 
     static float angleX = 0;
     static float angleY = 0;
@@ -79,10 +83,17 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         uterusTexture = loadTexture(drawable, UTERUS_TEXTURE_PATH);
         uterusBump = loadTexture(drawable, UTERUS_BUMP_PATH);
 
+        initBaby();
+
     }
 
     @Override
     public void dispose(GLAutoDrawable drawable) {
+        GL2 gl = drawable.getGL().getGL2();
+
+        gl.glDeleteProgram(program);
+
+        System.exit(0);
 
     }
 
@@ -94,7 +105,8 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         updateCamera(drawable);
         updateRotations(drawable);
-        drawSphere(drawable, glu, 10, 32, 32);
+        // drawSphere(drawable, glu, 10, 32, 32);
+        renderModel(drawable, modelBaby);
     }
 
     @Override
@@ -111,7 +123,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         gl.glLoadIdentity();
 
         float aspect = (float) getWidth() / (float) getHeight();
-        glu.gluPerspective(45, aspect, 1, 1000);
+        glu.gluPerspective(60, aspect, 0.1, 1000);
         glu.gluLookAt(distX, distY, distZ, distX, distY, 0, 0, 1, 0);
 
         gl.glMatrixMode(GLMatrixFunc.GL_MODELVIEW);
@@ -128,6 +140,42 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 //        gl.glBindTexture(GL.GL_TEXTURE_2D, textures[0]);
 //        gl.glTexParameteri();
 //    }
+
+    private void initBaby() {
+
+        InputStream objStream = MainWindow.class.getResourceAsStream(BABY_MODEL_OBJ_PATH);
+        IOBJParser objParser = new OBJParser();
+        try {
+            modelBaby = objParser.parse(objStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void renderModel(GLAutoDrawable drawable, OBJModel model) {
+        GL2 gl = drawable.getGL().getGL2();
+
+        gl.glBegin(GL2.GL_TRIANGLES);
+        for (OBJObject object : model.getObjects()) {
+            for (OBJMesh mesh : object.getMeshes()) {
+                for (OBJFace face : mesh.getFaces()) {
+                    for (OBJDataReference reference : face.getReferences()) {
+                        final OBJVertex vertex = model.getVertex(reference);
+                        gl.glVertex3f(vertex.x, vertex.y, vertex.z);
+                        if (reference.hasNormalIndex()) {
+                            final OBJNormal normal = model.getNormal(reference);
+                            gl.glNormal3f(normal.x, normal.y, normal.z);
+                        }
+                        if (reference.hasTexCoordIndex()) {
+                            final OBJTexCoord texCoord = model.getTexCoord(reference);
+                            gl.glTexCoord3f(texCoord.u, texCoord.v, texCoord.w);
+                        }
+                    }
+                }
+            }
+        }
+        gl.glEnd();
+    }
 
     private void initShaders(GLAutoDrawable drawable) {
         GL2 gl = drawable.getGL().getGL2();
