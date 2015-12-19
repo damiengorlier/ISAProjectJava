@@ -5,23 +5,43 @@ uniform vec4  lightPosition4;
 uniform vec4  lightPosition5;
 uniform vec4  lightPosition6;
 
+uniform vec4 myColor;
+
 uniform vec4  eyePosition;
 
+uniform sampler2D uterusTexture, uterusBumpMap;
+
 varying vec3 vPositionES;
-varying vec3 vNormalES;
+
+varying vec2 vTexCoord;
 
 
 void main(void)
 {   
+   //**------------------------
+   //** Compute texture effect
+   //**------------------------
+   
+   vec3 texture = texture2D( uterusTexture, vTexCoord ).xyz;
+   vec3 bump = texture2D( uterusBumpMap, vTexCoord ).xyz;
+   
+   //**--------------------------------------------------------
+   //** "Smooth out" the bumps based on the bumpiness parameter.
+   //** This is simply a linear interpolation between a "flat"
+   //** normal and a "bumped" normal.  Note that this "flat"
+   //** normal is based on the texture space coordinate basis.
+   //**--------------------------------------------------------
+   vec3 smoothOut = vec3(0.5, 0.5, 1.0);
+   float bumpiness = 0.5;
+  
+   bump = mix( smoothOut, bump, bumpiness );
+   bump = normalize( ( bump * 2.0 ) - 1.0 );
  
    //**---------------------
    //**Compute light effect
    //**---------------------
    // Compute normalized vector from vertex to light in eye space  (Leye)
    vec3 Leye = normalize(lightPosition1.xyz + lightPosition2.xyz + lightPosition3.xyz + lightPosition4.xyz + lightPosition5.xyz + lightPosition6.xyz - vPositionES);
-
-   // Normalize interpolated normal
-   vec3 Neye = normalize(vNormalES);
    
    // Compute Veye
    vec3 Veye = -normalize(vPositionES);
@@ -30,24 +50,23 @@ void main(void)
    vec3 Heye = normalize(Leye + Veye);
 
    // N.L
-   float NdotL = dot(Neye, Leye);
+   vec3 NdotL = vec3(dot (bump, Leye));
    
    // Compute N.H
-   float NdotH = dot(Neye,Heye);
-
+   vec3 NdotH = vec3(dot (bump, Heye));
+   
    //compute ambient light
    float ambient = 0.5;
    
    // "Half-Lambert" technique for more pleasing diffuse term
-   float diffuse = NdotL * 0.5;
-   
+   vec3 diffuse =0.5 *max(vec3(0.0), NdotL); 
    
    // Compute specular light
-   float specular = pow(clamp(NdotH, 0.0, 1.0),40.0);
+   vec3 specular = pow(max(vec3(0.0),NdotH),vec3(40.0));
      
    //**--------------------------------------
    //** Compute global effect for each pixel
    //**--------------------------------------
-   gl_FragColor = vec4(diffuse + ambient + specular);
-   
+   gl_FragColor = vec4 ((texture * (diffuse + ambient) + specular),1.0);
+   //gl_FragColor = texture;
 }
