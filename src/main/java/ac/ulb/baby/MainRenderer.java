@@ -106,6 +106,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         updateCamera(drawable);
         updateRotations(drawable);
         // drawSphere(drawable, glu, 10, 32, 32);
+        gl.glUseProgram(program);
         renderModel(drawable, modelBaby);
     }
 
@@ -191,10 +192,6 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         shaderProgram.init(gl);
 
         program = shaderProgram.program();
-
-        gl.glBindAttribLocation(program, 0, "position");
-        gl.glBindAttribLocation(program, 3, "color");
-        gl.glBindFragDataLocation(program, 0, "outputColor");
 
         shaderProgram.link(gl, System.out);
     }

@@ -2,15 +2,8 @@
  * Fragment shader.
  */
 
-#version 400
-
-// Incoming interpolated (between vertices) color.
-in vec3 interpolatedColor;
-
-// Outgoing final color.
-out vec4 outputColor;
+#version 130
 
 void main() {
-    // We simply pad the interpolatedColor
-    outputColor = vec4(interpolatedColor, 1);
+    gl_FragColor = gl_Color;
 }
