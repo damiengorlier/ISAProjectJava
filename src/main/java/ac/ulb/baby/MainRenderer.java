@@ -156,10 +156,10 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     private void renderModel(GLAutoDrawable drawable, OBJModel model) {
         GL2 gl = drawable.getGL().getGL2();
 
-        gl.glBegin(GL2.GL_TRIANGLES);
         for (OBJObject object : model.getObjects()) {
             for (OBJMesh mesh : object.getMeshes()) {
                 for (OBJFace face : mesh.getFaces()) {
+                    gl.glBegin(GL2.GL_TRIANGLES);
                     for (OBJDataReference reference : face.getReferences()) {
                         final OBJVertex vertex = model.getVertex(reference);
                         gl.glVertex3f(vertex.x, vertex.y, vertex.z);
@@ -172,10 +172,10 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
                             gl.glTexCoord3f(texCoord.u, texCoord.v, texCoord.w);
                         }
                     }
+                    gl.glEnd();
                 }
             }
         }
-        gl.glEnd();
     }
 
     private void initShaders(GLAutoDrawable drawable) {
