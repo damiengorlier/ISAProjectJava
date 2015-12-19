@@ -1,11 +1,9 @@
-uniform vec4  lightPosition1;
-uniform vec4  lightPosition2;
-uniform vec4  lightPosition3;
-uniform vec4  lightPosition4;
-uniform vec4  lightPosition5;
-uniform vec4  lightPosition6;
-
-uniform vec4 myColor;
+uniform vec3  lightPosition1;
+uniform vec3  lightPosition2;
+uniform vec3  lightPosition3;
+uniform vec3  lightPosition4;
+uniform vec3  lightPosition5;
+uniform vec3  lightPosition6;
 
 uniform vec4  eyePosition;
 
@@ -41,7 +39,7 @@ void main(void)
    //**Compute light effect
    //**---------------------
    // Compute normalized vector from vertex to light in eye space  (Leye)
-   vec3 Leye = normalize(lightPosition1.xyz + lightPosition2.xyz + lightPosition3.xyz + lightPosition4.xyz + lightPosition5.xyz + lightPosition6.xyz - vPositionES);
+   vec3 Leye = normalize(lightPosition1 + lightPosition2 + lightPosition3 + lightPosition4 + lightPosition5 + lightPosition6 - vPositionES);
    
    // Compute Veye
    vec3 Veye = -normalize(vPositionES);
