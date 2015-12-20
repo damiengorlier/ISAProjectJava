@@ -10,12 +10,13 @@ const vec3 LIGHT_COLOR = vec3(1.0, 1.0, 1.0);
 
 // Attenuation factors : 1 / (Kc + Kl * dist + Kq * dist²)
 const float Kc = 0.0;
-const float Kl = 0.03;
-const float Kq = 0.01;
+const float Kl = 0.05;
+const float Kq = 0.03;
 
 uniform vec3 lightPosition[NUM_LIGHTS];
 
 varying vec3 vPositionES;
+varying vec3 vPosition;
 varying vec3 vNormalES;
 
 float distanceAttenuation(vec3 lightVector);
@@ -31,11 +32,9 @@ void main()
     vec3 diffuse = vec3(0.0, 0.0, 0.0);
     vec3 specular = vec3(0.0, 0.0, 0.0);
 
-
-
     for(int i = 0; i < NUM_LIGHTS; i++) {
 
-        vec3 lightVector = lightPosition[0].xyz - vPositionES;
+        vec3 lightVector = lightPosition[i].xyz - vPosition;
 
         float attFactor = distanceAttenuation(lightVector);
 

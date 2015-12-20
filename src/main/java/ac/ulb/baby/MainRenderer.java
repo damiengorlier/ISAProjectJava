@@ -201,15 +201,17 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
                     gl.glBegin(GL2.GL_TRIANGLES);
                     for (OBJDataReference reference : face.getReferences()) {
                         final OBJVertex vertex = model.getVertex(reference);
-                        gl.glVertex3f(vertex.x, vertex.y, vertex.z);
-                        if (reference.hasNormalIndex()) {
-                            final OBJNormal normal = model.getNormal(reference);
-                            gl.glNormal3f(normal.x, normal.y, normal.z);
-                        }
                         if (reference.hasTexCoordIndex()) {
                             final OBJTexCoord texCoord = model.getTexCoord(reference);
                             gl.glTexCoord3f(texCoord.u, texCoord.v, texCoord.w);
                         }
+                        if (reference.hasNormalIndex()) {
+                            final OBJNormal normal = model.getNormal(reference);
+                            gl.glNormal3f(normal.x, normal.y, normal.z);
+                        } else {
+
+                        }
+                        gl.glVertex3f(vertex.x, vertex.y, vertex.z);
                     }
                     gl.glEnd();
                 }
