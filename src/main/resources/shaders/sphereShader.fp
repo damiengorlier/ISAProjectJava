@@ -48,10 +48,10 @@ void main(void)
    ambient *= texture;
 
    // diffuse
-   vec3 diffuse = (0.0,0.0,0.0);
+   vec3 diffuse = vec3(0.0,0.0,0.0);
    
    //specular
-   vec3 specular = (0.0,0.0,0.0);
+   vec3 specular = vec3(0.0,0.0,0.0);
    
    // Compute Veye
    vec3 Veye = -normalize(vPositionES);
