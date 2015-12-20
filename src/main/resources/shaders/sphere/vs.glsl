@@ -4,13 +4,14 @@
 
 #version 130
 
-varying vec3 fragNormal;
-varying vec3 fragPosition;
+varying vec3 vPositionES;
+varying vec3 vNormalES;
 
 void main()
 {
-    fragNormal = gl_NormalMatrix * gl_Normal;
-    fragPosition = vec3(gl_ModelViewMatrix * gl_Vertex);
+    gl_Position = ftransform();
 
-    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+    // Transform position and normal to eye space
+    vPositionES  = vec3(gl_ModelViewMatrix * gl_Vertex);
+    vNormalES    = gl_NormalMatrix * gl_Normal;
 }

@@ -20,7 +20,6 @@ import java.awt.event.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.FloatBuffer;
-import java.util.Arrays;
 
 public class MainRenderer extends GLJPanel implements GLEventListener {
 
@@ -44,7 +43,6 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     // Outils & Containers
     private GLU glu;
-    private GLUT glut;
     private Texture uterusTexture;
     private Texture uterusBump;
     private OBJModel modelBaby;
@@ -52,7 +50,6 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     // Sphere
     private ShaderLocation sphereShaderLocation;
     private int sphereLightPositionLocation;
-    private int sphereEyePositionLocation;
 
     private float angleX = 0;
     private float angleY = 0;
@@ -99,7 +96,6 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         GL2 gl = drawable.getGL().getGL2();
         drawable.setGL(new DebugGL2(gl));
         glu = new GLU();
-        glut = new GLUT();
 
         gl.glEnable(GL.GL_DEPTH_TEST);
         gl.glEnable(GL.GL_TEXTURE_2D);
@@ -109,10 +105,11 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         gl.glClearColor(0f, 0f, 0f, 1f);
         gl.glClearDepth(1f);
 
+        initPerspective(drawable);
+
         initShaders(drawable);
         initTextures(drawable);
         initBaby();
-
     }
 
     @Override
@@ -128,22 +125,22 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         GL2 gl = drawable.getGL().getGL2();
         gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
+        gl.glLoadIdentity();
 
-        updateEye(drawable);
+        updateEye();
 
         gl.glUseProgram(sphereShaderLocation.programLocation);
 
-        gl.glUniform3fv(sphereEyePositionLocation, 1, FloatBuffer.wrap(eyePosition));
         gl.glUniform3fv(sphereLightPositionLocation, NUM_LIGHTS, FloatBuffer.wrap(lightPosition));
 
-        //drawSphere(drawable, SPHERE_RADIUS, 32, 32);
-
-
+//        drawSphere(drawable, R, 32, 32);
+        gl.glPushMatrix();
         updateRotations(drawable);
         renderModel(drawable, modelBaby);
+        gl.glPopMatrix();
 
         // Pour visualiser les lumières
-//        gl.glUseProgram(0);
+        gl.glUseProgram(0);
 //        gl.glLoadIdentity();
 //        for(int i = 0; i < NUM_LIGHTS; ++i) {
 //		/* render sphere with the light's color/position */
@@ -162,7 +159,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         gl.glViewport(0, 0, width, height);
     }
 
-    private void updateEye(GLAutoDrawable drawable) {
+    private void initPerspective(GLAutoDrawable drawable) {
         GL2 gl = drawable.getGL().getGL2();
 
         gl.glMatrixMode(GLMatrixFunc.GL_PROJECTION);
@@ -170,10 +167,13 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         float aspect = (float) getWidth() / (float) getHeight();
         glu.gluPerspective(60, aspect, 0.1, 200);
-        glu.gluLookAt(eyePosition[0], eyePosition[1], eyePosition[2], eyePosition[0], eyePosition[1], 0, 0, 1, 0);
 
         gl.glMatrixMode(GLMatrixFunc.GL_MODELVIEW);
         gl.glLoadIdentity();
+    }
+
+    private void updateEye() {
+        glu.gluLookAt(eyePosition[0], eyePosition[1], eyePosition[2], eyePosition[0], eyePosition[1], 0, 0, 1, 0);
     }
 
     private void initTextures(GLAutoDrawable drawable) {
@@ -220,7 +220,6 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     private void initShaders(GLAutoDrawable drawable) {
         GL2 gl = drawable.getGL().getGL2();
         sphereShaderLocation = initShader(drawable, SPHERE_SHADERS_PATH);
-        sphereEyePositionLocation = gl.glGetUniformLocation(sphereShaderLocation.programLocation, "eyePosition");
         sphereLightPositionLocation = gl.glGetUniformLocation(sphereShaderLocation.programLocation, "lightPosition");
     }
 
