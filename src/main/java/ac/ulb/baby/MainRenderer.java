@@ -7,6 +7,7 @@ import com.jogamp.opengl.fixedfunc.GLLightingFunc;
 import com.jogamp.opengl.fixedfunc.GLMatrixFunc;
 import com.jogamp.opengl.glu.GLU;
 import com.jogamp.opengl.glu.GLUquadric;
+import com.jogamp.opengl.util.gl2.GLUT;
 import com.jogamp.opengl.util.glsl.ShaderCode;
 import com.jogamp.opengl.util.glsl.ShaderProgram;
 import com.jogamp.opengl.util.texture.Texture;
@@ -18,9 +19,13 @@ import javax.swing.*;
 import java.awt.event.*;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 public class MainRenderer extends GLJPanel implements GLEventListener {
 
+
+    // Constantes
     private static final String TEXTURES_ROOT = "/textures";
     private static final String UTERUS_TEXTURE_PATH = TEXTURES_ROOT + "/" + "uterus_text.png";
     private static final String UTERUS_BUMP_PATH = TEXTURES_ROOT + "/" + "uterus_bump.png";
@@ -29,21 +34,46 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     private static final String BABY_MODEL_OBJ_PATH = MODEL_ROOT + "/baby_original_triangles.obj";
 
     private static final String SHADERS_ROOT = "/shaders";
+    private static final String SHADER_EXT = "glsl";
+    private static final String VERTEX_SHADER = "vs";
+    private static final String FRAGMENT_SHADER = "fs";
+    private static final String SPHERE_SHADERS_PATH = "/sphere";
 
-    private int program;
+    // Sphere radius
+    private static final int R = 10;
+
+    // Outils & Containers
     private GLU glu;
+    private GLUT glut;
     private Texture uterusTexture;
     private Texture uterusBump;
-
     private OBJModel modelBaby;
 
-    static float angleX = 0;
-    static float angleY = 0;
-    static float angleZ = 0;
+    // Sphere
+    private ShaderLocation sphereShaderLocation;
+    private int sphereLightPositionLocation;
+    private int sphereEyePositionLocation;
 
-    static float distX = 0;
-    static float distY = 0;
-    static float distZ = 100;
+    private float angleX = 0;
+    private float angleY = 0;
+    // TODO
+    private float angleZ = 0;
+
+    private float[] eyePosition = new float[]{0, 0, 30};
+
+    private static final int NUM_LIGHTS = 6;
+    private static final float[] POS_X = {1, (float) -0.5};
+    private static final float[] POS_Y = {(float) Math.sin(Math.PI / 4), (float) -Math.sin(Math.PI / 4)};
+    private static final float[] POS_Z = {0, (float) Math.sin(2 * Math.PI / 3), (float) -Math.sin(2 * Math.PI / 3)};
+
+    private float[] lightPosition = {
+            R * POS_X[0], R * POS_Y[0], R * POS_Z[0],
+            R * POS_X[0], R * POS_Y[1], R * POS_Z[0],
+            R * POS_X[1], R * POS_Y[0], R * POS_Z[1],
+            R * POS_X[1], R * POS_Y[1], R * POS_Z[1],
+            R * POS_X[1], R * POS_Y[0], R * POS_Z[2],
+            R * POS_X[1], R * POS_Y[1], R * POS_Z[2]
+    };
 
     private boolean mouseFirstPressed = false;
     private boolean mouseSecondPressed = false;
@@ -69,6 +99,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         GL2 gl = drawable.getGL().getGL2();
         drawable.setGL(new DebugGL2(gl));
         glu = new GLU();
+        glut = new GLUT();
 
         gl.glEnable(GL.GL_DEPTH_TEST);
         gl.glEnable(GL.GL_TEXTURE_2D);
@@ -79,22 +110,17 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         gl.glClearDepth(1f);
 
         initShaders(drawable);
-
-        uterusTexture = loadTexture(drawable, UTERUS_TEXTURE_PATH);
-        uterusBump = loadTexture(drawable, UTERUS_BUMP_PATH);
-
+        initTextures(drawable);
         initBaby();
 
     }
 
     @Override
     public void dispose(GLAutoDrawable drawable) {
-        GL2 gl = drawable.getGL().getGL2();
 
-        gl.glDeleteProgram(program);
+        cleanShader(drawable, sphereShaderLocation);
 
         System.exit(0);
-
     }
 
     @Override
@@ -103,11 +129,30 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         GL2 gl = drawable.getGL().getGL2();
         gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
 
-        updateCamera(drawable);
+        updateEye(drawable);
+
+        gl.glUseProgram(sphereShaderLocation.programLocation);
+
+        gl.glUniform3fv(sphereEyePositionLocation, 1, FloatBuffer.wrap(eyePosition));
+        gl.glUniform3fv(sphereLightPositionLocation, NUM_LIGHTS, FloatBuffer.wrap(lightPosition));
+
+        //drawSphere(drawable, SPHERE_RADIUS, 32, 32);
+
+
         updateRotations(drawable);
-        // drawSphere(drawable, glu, 10, 32, 32);
-        gl.glUseProgram(program);
         renderModel(drawable, modelBaby);
+
+        // Pour visualiser les lumières
+//        gl.glUseProgram(0);
+//        gl.glLoadIdentity();
+//        for(int i = 0; i < NUM_LIGHTS; ++i) {
+//		/* render sphere with the light's color/position */
+//            gl.glPushMatrix();
+//            gl.glTranslatef(lightPosition[i * 3], lightPosition[i * 3 + 1], lightPosition[i * 3 + 2]);
+//            gl.glColor3fv(FloatBuffer.wrap(new float[]{1, 1, 1}));
+//            glut.glutSolidSphere(0.1, 36, 36);
+//            gl.glPopMatrix();
+//        }
     }
 
     @Override
@@ -117,30 +162,24 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         gl.glViewport(0, 0, width, height);
     }
 
-    private void updateCamera(GLAutoDrawable drawable) {
+    private void updateEye(GLAutoDrawable drawable) {
         GL2 gl = drawable.getGL().getGL2();
 
         gl.glMatrixMode(GLMatrixFunc.GL_PROJECTION);
         gl.glLoadIdentity();
 
         float aspect = (float) getWidth() / (float) getHeight();
-        glu.gluPerspective(60, aspect, 0.1, 1000);
-        glu.gluLookAt(distX, distY, distZ, distX, distY, 0, 0, 1, 0);
+        glu.gluPerspective(60, aspect, 0.1, 200);
+        glu.gluLookAt(eyePosition[0], eyePosition[1], eyePosition[2], eyePosition[0], eyePosition[1], 0, 0, 1, 0);
 
         gl.glMatrixMode(GLMatrixFunc.GL_MODELVIEW);
         gl.glLoadIdentity();
     }
 
-//    private void initTextures(GLAutoDrawable drawable, GLU glu) {
-//        GL2 gl = drawable.getGL().getGL2();
-//
-//        gl.glGenTextures(TEXTURE_NBR, textures, 0);
-//
-//        Texture texture = loadTexture(drawable, UTERUS_TEXTURE_PATH);
-//
-//        gl.glBindTexture(GL.GL_TEXTURE_2D, textures[0]);
-//        gl.glTexParameteri();
-//    }
+    private void initTextures(GLAutoDrawable drawable) {
+        uterusTexture = loadTexture(drawable, UTERUS_TEXTURE_PATH);
+        uterusBump = loadTexture(drawable, UTERUS_BUMP_PATH);
+    }
 
     private void initBaby() {
 
@@ -180,20 +219,43 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private void initShaders(GLAutoDrawable drawable) {
         GL2 gl = drawable.getGL().getGL2();
+        sphereShaderLocation = initShader(drawable, SPHERE_SHADERS_PATH);
+        sphereEyePositionLocation = gl.glGetUniformLocation(sphereShaderLocation.programLocation, "eyePosition");
+        sphereLightPositionLocation = gl.glGetUniformLocation(sphereShaderLocation.programLocation, "lightPosition");
+    }
+
+    private ShaderLocation initShader(GLAutoDrawable drawable, String shadersPath) {
+        GL2 gl = drawable.getGL().getGL2();
         ShaderCode vertShader = ShaderCode.create(gl, GL2ES2.GL_VERTEX_SHADER, this.getClass(),
-                SHADERS_ROOT, null, "vs", "glsl", null, true);
+                SHADERS_ROOT, null, shadersPath + "/" + VERTEX_SHADER, SHADER_EXT, null, true);
         ShaderCode fragShader = ShaderCode.create(gl, GL2ES2.GL_FRAGMENT_SHADER, this.getClass(),
-                SHADERS_ROOT, null, "fs", "glsl", null, true);
+                SHADERS_ROOT, null, shadersPath + "/" + FRAGMENT_SHADER, SHADER_EXT, null, true);
+
+        vertShader.compile(gl);
+        fragShader.compile(gl);
 
         ShaderProgram shaderProgram = new ShaderProgram();
         shaderProgram.add(vertShader);
         shaderProgram.add(fragShader);
 
         shaderProgram.init(gl);
-
-        program = shaderProgram.program();
-
         shaderProgram.link(gl, System.out);
+
+        ShaderLocation location = new ShaderLocation();
+        location.vShaderLocation = vertShader.shaderBinaryFormat();
+        location.fShaderLocation = fragShader.shaderBinaryFormat();
+        location.programLocation = shaderProgram.program();
+
+        return location;
+    }
+
+    private void cleanShader(GLAutoDrawable drawable, ShaderLocation location) {
+        GL2 gl = drawable.getGL().getGL2();
+        gl.glDetachShader(location.programLocation, location.vShaderLocation);
+        gl.glDetachShader(location.programLocation, location.fShaderLocation);
+        gl.glDeleteShader(location.vShaderLocation);
+        gl.glDeleteShader(location.fShaderLocation);
+        gl.glDeleteProgram(location.programLocation);
     }
 
     private Texture loadTexture(GLAutoDrawable drawable, String path) {
@@ -211,12 +273,12 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private void updateRotations(GLAutoDrawable drawable) {
         GL2 gl = drawable.getGL().getGL2();
-        gl.glRotatef(angleZ, 0, 0, 1);
-        gl.glRotatef(angleY, 0, 1, 0);
         gl.glRotatef(angleX, 1, 0, 0);
+        gl.glRotatef(angleY, 0, 1, 0);
+        gl.glRotatef(angleZ, 0, 0, 1);
     }
 
-    private void drawSphere(GLAutoDrawable drawable, GLU glu, int radius, int slices, int stacks) {
+    private void drawSphere(GLAutoDrawable drawable, int radius, int slices, int stacks) {
         GL2 gl = drawable.getGL().getGL2();
 
         if (uterusTexture == null) {
@@ -225,6 +287,9 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
             uterusTexture.enable(gl);
             uterusTexture.bind(gl);
         }
+
+        gl.glRotatef(90, 0, 1, 0);
+        gl.glRotatef(90, 0, 0, 1);
 
         GLUquadric sphere = glu.gluNewQuadric();
         glu.gluQuadricTexture(sphere, true);
@@ -284,15 +349,15 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         this.getActionMap().put(ActionEnum.PLUS_ANGLE_Z.action(), new ActionPlusAngleZ());
 
         // Distances
-        this.getActionMap().put(ActionEnum.LESS_DIST_X.action(), new ActionLessDistX());
-        this.getActionMap().put(ActionEnum.PLUS_DIST_X.action(), new ActionPlusDistX());
-        this.getActionMap().put(ActionEnum.LESS_DIST_Y.action(), new ActionLessDistY());
-        this.getActionMap().put(ActionEnum.PLUS_DIST_Y.action(), new ActionPlusDistY());
-        this.getActionMap().put(ActionEnum.LESS_DIST_Z.action(), new ActionLessDistZ());
-        this.getActionMap().put(ActionEnum.PLUS_DIST_Z.action(), new ActionPlusDistZ());
+        this.getActionMap().put(ActionEnum.LESS_DIST_X.action(), new ActionLessEyeX());
+        this.getActionMap().put(ActionEnum.PLUS_DIST_X.action(), new ActionPlusEyeX());
+        this.getActionMap().put(ActionEnum.LESS_DIST_Y.action(), new ActionLessEyeY());
+        this.getActionMap().put(ActionEnum.PLUS_DIST_Y.action(), new ActionPlusEyeY());
+        this.getActionMap().put(ActionEnum.LESS_DIST_Z.action(), new ActionLessEyeZ());
+        this.getActionMap().put(ActionEnum.PLUS_DIST_Z.action(), new ActionPlusEyeZ());
     }
 
-    private static class ActionLessAngleX extends AbstractAction {
+    private class ActionLessAngleX extends AbstractAction {
 
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -303,7 +368,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         }
     }
 
-    private static class ActionPlusAngleX extends AbstractAction {
+    private class ActionPlusAngleX extends AbstractAction {
 
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -314,7 +379,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         }
     }
 
-    private static class ActionLessAngleY extends AbstractAction {
+    private class ActionLessAngleY extends AbstractAction {
 
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -325,7 +390,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         }
     }
 
-    private static class ActionPlusAngleY extends AbstractAction {
+    private class ActionPlusAngleY extends AbstractAction {
 
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -336,7 +401,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         }
     }
 
-    private static class ActionLessAngleZ extends AbstractAction {
+    private class ActionLessAngleZ extends AbstractAction {
 
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -347,7 +412,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         }
     }
 
-    private static class ActionPlusAngleZ extends AbstractAction {
+    private class ActionPlusAngleZ extends AbstractAction {
 
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -358,51 +423,51 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         }
     }
 
-    private static class ActionLessDistX extends AbstractAction {
+    private class ActionLessEyeX extends AbstractAction {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            distX -= 1;
+            eyePosition[0] -= 1;
         }
     }
 
-    private static class ActionPlusDistX extends AbstractAction {
+    private class ActionPlusEyeX extends AbstractAction {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            distX += 1;
+            eyePosition[0] += 1;
         }
     }
 
-    private static class ActionLessDistY extends AbstractAction {
+    private class ActionLessEyeY extends AbstractAction {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            distY -= 1;
+            eyePosition[1] -= 1;
         }
     }
 
-    private static class ActionPlusDistY extends AbstractAction {
+    private class ActionPlusEyeY extends AbstractAction {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            distY += 1;
+            eyePosition[1] += 1;
         }
     }
 
-    private static class ActionLessDistZ extends AbstractAction {
+    private class ActionLessEyeZ extends AbstractAction {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            distZ -= 5;
+            eyePosition[2] -= 2;
         }
     }
 
-    private static class ActionPlusDistZ extends AbstractAction {
+    private class ActionPlusEyeZ extends AbstractAction {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            distZ += 5;
+            eyePosition[2] += 2;
         }
     }
 
@@ -439,8 +504,8 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
             float x = e.getX();
             float y = e.getY();
             if (mouseFirstPressed) {
-                distX += (prevMouseX - x) / 10;
-                distY += (y - prevMouseY) / 10;
+                eyePosition[0] += (prevMouseX - x) / 10;
+                eyePosition[1] += (y - prevMouseY) / 10;
             } else if (mouseSecondPressed) {
                 float thetaY = 360 * (x - prevMouseX) / getWidth();
                 float thetaX = 360 * (y - prevMouseY) / getHeight();
@@ -453,7 +518,13 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void mouseWheelMoved(final MouseWheelEvent e) {
-            distZ += e.getWheelRotation() * 5;
+            eyePosition[2] += e.getWheelRotation() * 5;
         }
+    }
+
+    private class ShaderLocation {
+        public int vShaderLocation;
+        public int fShaderLocation;
+        public int programLocation;
     }
 }
