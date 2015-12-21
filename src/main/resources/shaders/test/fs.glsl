@@ -1,7 +1,5 @@
 #version 130
 
-const int NUM_LIGHTS = 6;
-
 const float MaterialThickness = 0.6;
 const vec3 ExtinctionCoefficient = vec3(0.8, 0.12, 0.2); // Will show as X Y and Z ports in QC, but actually represent RGB values.
 const vec4 LightColor = vec4(1.0, 1.0, 1.0, 1.0);
@@ -9,13 +7,6 @@ const vec4 BaseColor = vec4(254.0/255.0, 195.0/255.0, 172.0/255.0, 1);
 const vec4 SpecColor = vec4(1.0, 0.9, 0.9, 1.0);
 const float SpecPower = 64;
 const float RimScalar = 1.0;
-
-// Attenuation factors : 1 / (Kc + Kl * dist + Kq * dist²)
-const float Kc = 0.0;
-const float Kl = 0.05;
-const float Kq = 0.03;
-
-uniform vec3 lightPosition[NUM_LIGHTS];
 
 varying vec3 worldNormal, eyeVec, lightVec, vertPos, lightPos;
 
