@@ -1,6 +1,7 @@
 package ac.ulb.baby;
 
 import ac.ulb.enums.*;
+import ac.ulb.utils.ShaderControl;
 import com.jogamp.opengl.*;
 import com.jogamp.opengl.awt.GLJPanel;
 import com.jogamp.opengl.fixedfunc.GLLightingFunc;
@@ -37,9 +38,15 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     private static final String VERTEX_SHADER = "vs";
     private static final String FRAGMENT_SHADER = "fs";
     private static final String SPHERE_SHADERS_PATH = "/sphere";
+    private static final String BABY_SHADERS_PATH = "/baby";
+    private static final String TEST_SHADERS_PATH = "/test";
 
-    // Sphere radius
-    private static final int R = 10;
+    private static final String LIGHT_POSITION = "lightPosition";
+
+    // Sphere parameters
+    private static final int R = 15;
+    private static final int SLICES = 32;
+    private static final int STACKS = 32;
 
     // Outils & Containers
     private GLU glu;
@@ -48,8 +55,12 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     private OBJModel modelBaby;
 
     // Sphere
-    private ShaderLocation sphereShaderLocation;
     private int sphereLightPositionLocation;
+    private ShaderControl sphereShaderControl;
+
+    // Baby
+    private int babyLightPositionLocation;
+    private ShaderControl babyShaderControl;
 
     private float angleX = 0;
     private float angleY = 0;
@@ -114,9 +125,9 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     @Override
     public void dispose(GLAutoDrawable drawable) {
-
-        cleanShader(drawable, sphereShaderLocation);
-
+        GL2 gl = drawable.getGL().getGL2();
+        sphereShaderControl.cleanShaderProgram(gl);
+        babyShaderControl.cleanShaderProgram(gl);
         System.exit(0);
     }
 
@@ -129,18 +140,22 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         updateEye();
 
-        gl.glUseProgram(sphereShaderLocation.programLocation);
+//        sphereShaderControl.useShaderProgram(gl);
+//        gl.glUniform3fv(sphereLightPositionLocation, NUM_LIGHTS, FloatBuffer.wrap(lightPosition));
+//
+//        drawSphere(drawable, R, SLICES, STACKS);
 
-        gl.glUniform3fv(sphereLightPositionLocation, NUM_LIGHTS, FloatBuffer.wrap(lightPosition));
+        babyShaderControl.useShaderProgram(gl);
+        gl.glUniform3fv(babyLightPositionLocation, NUM_LIGHTS, FloatBuffer.wrap(lightPosition));
 
-//        drawSphere(drawable, R, 32, 32);
         gl.glPushMatrix();
         updateRotations(drawable);
         renderModel(drawable, modelBaby);
         gl.glPopMatrix();
 
-        // Pour visualiser les lumières
         gl.glUseProgram(0);
+
+        // Pour visualiser les lumières
 //        gl.glLoadIdentity();
 //        for(int i = 0; i < NUM_LIGHTS; ++i) {
 //		/* render sphere with the light's color/position */
@@ -221,42 +236,25 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private void initShaders(GLAutoDrawable drawable) {
         GL2 gl = drawable.getGL().getGL2();
-        sphereShaderLocation = initShader(drawable, SPHERE_SHADERS_PATH);
-        sphereLightPositionLocation = gl.glGetUniformLocation(sphereShaderLocation.programLocation, "lightPosition");
+
+        sphereShaderControl = initShaderProgram(drawable, SPHERE_SHADERS_PATH);
+        sphereLightPositionLocation = gl.glGetUniformLocation(sphereShaderControl.getShaderProgram(), LIGHT_POSITION);
+
+        babyShaderControl = initShaderProgram(drawable, BABY_SHADERS_PATH);
+        babyLightPositionLocation = gl.glGetUniformLocation(babyShaderControl.getShaderProgram(), LIGHT_POSITION);
     }
 
-    private ShaderLocation initShader(GLAutoDrawable drawable, String shadersPath) {
+    private ShaderControl initShaderProgram(GLAutoDrawable drawable, String shadersPath) {
         GL2 gl = drawable.getGL().getGL2();
-        ShaderCode vertShader = ShaderCode.create(gl, GL2ES2.GL_VERTEX_SHADER, this.getClass(),
-                SHADERS_ROOT, null, shadersPath + "/" + VERTEX_SHADER, SHADER_EXT, null, true);
-        ShaderCode fragShader = ShaderCode.create(gl, GL2ES2.GL_FRAGMENT_SHADER, this.getClass(),
-                SHADERS_ROOT, null, shadersPath + "/" + FRAGMENT_SHADER, SHADER_EXT, null, true);
+        String absolutePath = SHADERS_ROOT + "/" + shadersPath;
+        String vertexPath = absolutePath + "/" + VERTEX_SHADER + "." + SHADER_EXT;
+        String fragmentPath = absolutePath + "/" + FRAGMENT_SHADER + "." + SHADER_EXT;
+        ShaderControl shaderControl = new ShaderControl();
+        shaderControl.setVertexSrc(ShaderControl.loadShader(vertexPath));
+        shaderControl.setFragmentSrc(ShaderControl.loadShader(fragmentPath));
+        shaderControl.init(gl);
 
-        vertShader.compile(gl);
-        fragShader.compile(gl);
-
-        ShaderProgram shaderProgram = new ShaderProgram();
-        shaderProgram.add(vertShader);
-        shaderProgram.add(fragShader);
-
-        shaderProgram.init(gl);
-        shaderProgram.link(gl, System.out);
-
-        ShaderLocation location = new ShaderLocation();
-        location.vShaderLocation = vertShader.shaderBinaryFormat();
-        location.fShaderLocation = fragShader.shaderBinaryFormat();
-        location.programLocation = shaderProgram.program();
-
-        return location;
-    }
-
-    private void cleanShader(GLAutoDrawable drawable, ShaderLocation location) {
-        GL2 gl = drawable.getGL().getGL2();
-        gl.glDetachShader(location.programLocation, location.vShaderLocation);
-        gl.glDetachShader(location.programLocation, location.fShaderLocation);
-        gl.glDeleteShader(location.vShaderLocation);
-        gl.glDeleteShader(location.fShaderLocation);
-        gl.glDeleteProgram(location.programLocation);
+        return shaderControl;
     }
 
     private Texture loadTexture(GLAutoDrawable drawable, String path) {
@@ -288,9 +286,6 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
             uterusTexture.enable(gl);
             uterusTexture.bind(gl);
         }
-
-        gl.glRotatef(90, 0, 1, 0);
-        gl.glRotatef(90, 0, 0, 1);
 
         GLUquadric sphere = glu.gluNewQuadric();
         glu.gluQuadricTexture(sphere, true);
@@ -521,11 +516,5 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         public void mouseWheelMoved(final MouseWheelEvent e) {
             eyePosition[2] += e.getWheelRotation() * 5;
         }
-    }
-
-    private class ShaderLocation {
-        public int vShaderLocation;
-        public int fShaderLocation;
-        public int programLocation;
     }
 }

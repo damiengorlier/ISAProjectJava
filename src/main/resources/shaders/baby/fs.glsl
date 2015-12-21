@@ -7,7 +7,9 @@
 const int NUM_LIGHTS = 6;
 const vec3 AMBIENT = vec3(0.1, 0.1, 0.1);
 const vec3 LIGHT_COLOR = vec3(1.0, 1.0, 1.0);
-const float SHININESS_COEFF = 40.0;
+const float SHININESS_COEFF = 64.0;
+const vec4 MAT_COLOR = vec4(254.0/255.0, 195.0/255.0, 172.0/255.0, 1); //définition de la couleur chair
+const float WAXINESS = 0.1;
 
 // Attenuation factors : 1 / (Kc + Kl * dist + Kq * dist²)
 const float Kc = 0.0;
@@ -50,13 +52,12 @@ void main()
         // Compute N.H
         float NdotH = dot(Neye,Heye);
 
-        diffuse += LIGHT_COLOR * clamp(NdotL, 0.0, 1.0) * attFactor;
+        diffuse += LIGHT_COLOR * (WAXINESS + (1 - WAXINESS) * clamp(NdotL, 0.0, 1.0)) * attFactor;
 
         specular += LIGHT_COLOR * pow(clamp(NdotH, 0.0, 1.0), SHININESS_COEFF) * attFactor;
     }
 
-    vec4 sampl = vec4(1.0, 1.0, 1.0, 1.0);
-    gl_FragColor = vec4(clamp(sampl.rgb * (diffuse + AMBIENT) + specular, 0.0, 1.0), sampl.a);
+    gl_FragColor = vec4(clamp(MAT_COLOR.rgb * (diffuse + AMBIENT) + specular, 0.0, 1.0), MAT_COLOR.a);
 }
 
 float distanceAttenuation(vec3 lightVector) {
