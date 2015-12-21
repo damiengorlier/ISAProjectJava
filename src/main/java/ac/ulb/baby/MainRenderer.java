@@ -42,6 +42,8 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     private static final String TEST_SHADERS_PATH = "/test";
 
     private static final String LIGHT_POSITION = "lightPosition";
+    private static final String UTERUS_TEXTURE = "uterusTexture";
+    private static final String UTERUS_BUMP_MAP = "uterusBumpMap";
 
     // Sphere parameters
     private static final int R = 15;
@@ -56,6 +58,8 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     // Sphere
     private int sphereLightPositionLocation;
+    private int sphereUterusTextureLocation;
+    private int sphereUterusBumpMapLocation;
     private ShaderControl sphereShaderControl;
 
     // Baby
@@ -70,17 +74,18 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     private float[] eyePosition = new float[]{0, 0, 30};
 
     private static final int NUM_LIGHTS = 6;
+    private static final int R2 = 3 * R / 4;
     private static final float[] POS_X = {1, (float) -0.5};
     private static final float[] POS_Y = {(float) Math.sin(Math.PI / 4), (float) -Math.sin(Math.PI / 4)};
     private static final float[] POS_Z = {0, (float) Math.sin(2 * Math.PI / 3), (float) -Math.sin(2 * Math.PI / 3)};
 
     private float[] lightPosition = {
-            R * POS_X[0], R * POS_Y[0], R * POS_Z[0],
-            R * POS_X[0], R * POS_Y[1], R * POS_Z[0],
-            R * POS_X[1], R * POS_Y[0], R * POS_Z[1],
-            R * POS_X[1], R * POS_Y[1], R * POS_Z[1],
-            R * POS_X[1], R * POS_Y[0], R * POS_Z[2],
-            R * POS_X[1], R * POS_Y[1], R * POS_Z[2]
+            R2 * POS_X[0], R2 * POS_Y[0], R2 * POS_Z[0],
+            R2 * POS_X[0], R2 * POS_Y[1], R2 * POS_Z[0],
+            R2 * POS_X[1], R2 * POS_Y[0], R2 * POS_Z[1],
+            R2 * POS_X[1], R2 * POS_Y[1], R2 * POS_Z[1],
+            R2 * POS_X[1], R2 * POS_Y[0], R2 * POS_Z[2],
+            R2 * POS_X[1], R2 * POS_Y[1], R2 * POS_Z[2]
     };
 
     private boolean mouseFirstPressed = false;
@@ -140,10 +145,18 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         updateEye();
 
-//        sphereShaderControl.useShaderProgram(gl);
-//        gl.glUniform3fv(sphereLightPositionLocation, NUM_LIGHTS, FloatBuffer.wrap(lightPosition));
-//
-//        drawSphere(drawable, R, SLICES, STACKS);
+        sphereShaderControl.useShaderProgram(gl);
+        gl.glUniform3fv(sphereLightPositionLocation, NUM_LIGHTS, FloatBuffer.wrap(lightPosition));
+        gl.glUniform1i(sphereUterusTextureLocation, 0);
+        gl.glUniform1i(sphereUterusBumpMapLocation, 1);
+
+        gl.glActiveTexture(GL.GL_TEXTURE0);
+        uterusTexture.bind(gl);
+
+        gl.glActiveTexture(GL.GL_TEXTURE1);
+        uterusBump.bind(gl);
+
+        drawSphere(drawable, R, SLICES, STACKS);
 
         babyShaderControl.useShaderProgram(gl);
         gl.glUniform3fv(babyLightPositionLocation, NUM_LIGHTS, FloatBuffer.wrap(lightPosition));
@@ -239,6 +252,8 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         sphereShaderControl = initShaderProgram(drawable, SPHERE_SHADERS_PATH);
         sphereLightPositionLocation = gl.glGetUniformLocation(sphereShaderControl.getShaderProgram(), LIGHT_POSITION);
+        sphereUterusTextureLocation = gl.glGetUniformLocation(sphereShaderControl.getShaderProgram(), UTERUS_TEXTURE);
+        sphereUterusBumpMapLocation = gl.glGetUniformLocation(sphereShaderControl.getShaderProgram(), UTERUS_BUMP_MAP);
 
         babyShaderControl = initShaderProgram(drawable, BABY_SHADERS_PATH);
         babyLightPositionLocation = gl.glGetUniformLocation(babyShaderControl.getShaderProgram(), LIGHT_POSITION);
@@ -280,12 +295,12 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     private void drawSphere(GLAutoDrawable drawable, int radius, int slices, int stacks) {
         GL2 gl = drawable.getGL().getGL2();
 
-        if (uterusTexture == null) {
-            throw new RuntimeException("Error : no texture for the sphere");
-        } else {
-            uterusTexture.enable(gl);
-            uterusTexture.bind(gl);
-        }
+//        if (uterusTexture == null) {
+//            throw new RuntimeException("Error : no texture for the sphere");
+//        } else {
+//            uterusTexture.enable(gl);
+//            uterusTexture.bind(gl);
+//        }
 
         GLUquadric sphere = glu.gluNewQuadric();
         glu.gluQuadricTexture(sphere, true);

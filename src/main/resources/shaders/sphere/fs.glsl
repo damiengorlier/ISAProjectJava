@@ -15,17 +15,34 @@ const float Kl = 0.05;
 const float Kq = 0.03;
 
 uniform vec3 lightPosition[NUM_LIGHTS];
+uniform sampler2D uterusTexture, uterusBumpMap;
 
 varying vec3 vPositionES;
 varying vec3 vPosition;
-varying vec3 vNormalES;
+varying vec2 vTexCoord;
 
 float distanceAttenuation(vec3 lightVector);
 
 void main()
 {
-    // Normalize interpolated normal
-    vec3 Neye = normalize(vNormalES);
+    //**------------------------
+    //** Compute texture effect
+    //**------------------------
+
+    vec3 texture = texture2D( uterusTexture, vTexCoord ).xyz;
+    vec3 bump = texture2D( uterusBumpMap, vTexCoord ).xyz;
+
+    //**--------------------------------------------------------
+    //** "Smooth out" the bumps based on the bumpiness parameter.
+    //** This is simply a linear interpolation between a "flat"
+    //** normal and a "bumped" normal.  Note that this "flat"
+    //** normal is based on the texture space coordinate basis.
+    //**--------------------------------------------------------
+    vec3 smoothOut = vec3(0.5, 0.5, 1.0);
+    float bumpiness = 0.5;
+
+    bump = mix( smoothOut, bump, bumpiness );
+    bump = normalize( ( bump * 2.0 ) - 1.0 );
 
     // Compute Veye
     vec3 Veye = -normalize(vPositionES);
@@ -45,18 +62,17 @@ void main()
         vec3 Heye = normalize(Leye + Veye);
 
         // N.L
-        float NdotL = dot(Neye, Leye);
+        float NdotL = dot(bump, Leye);
 
         // Compute N.H
-        float NdotH = dot(Neye,Heye);
+        float NdotH = dot(bump,Heye);
 
         diffuse += LIGHT_COLOR * clamp(NdotL, 0.0, 1.0) * attFactor;
 
         specular += LIGHT_COLOR * pow(clamp(NdotH, 0.0, 1.0), SHININESS_COEFF) * attFactor;
     }
 
-    vec4 sampl = vec4(1.0, 1.0, 1.0, 1.0);
-    gl_FragColor = vec4(clamp(sampl.rgb * (diffuse + AMBIENT) + specular, 0.0, 1.0), sampl.a);
+    gl_FragColor = vec4(clamp(texture * (diffuse + AMBIENT) + specular, 0.0, 1.0), 1.0);
 }
 
 float distanceAttenuation(vec3 lightVector) {
