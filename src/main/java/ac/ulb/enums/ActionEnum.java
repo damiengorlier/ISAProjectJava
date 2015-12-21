@@ -1,6 +1,9 @@
 package ac.ulb.enums;
 
 public enum ActionEnum {
+    // Animation
+    START_ANIMATION("startAnimation"),
+
     // Rotations
     PLUS_ANGLE_X("plusAngleX"),
     LESS_ANGLE_X("lessAngleX"),

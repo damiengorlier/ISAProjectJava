@@ -8,9 +8,6 @@ import com.jogamp.opengl.fixedfunc.GLLightingFunc;
 import com.jogamp.opengl.fixedfunc.GLMatrixFunc;
 import com.jogamp.opengl.glu.GLU;
 import com.jogamp.opengl.glu.GLUquadric;
-import com.jogamp.opengl.util.gl2.GLUT;
-import com.jogamp.opengl.util.glsl.ShaderCode;
-import com.jogamp.opengl.util.glsl.ShaderProgram;
 import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.TextureData;
 import com.jogamp.opengl.util.texture.TextureIO;
@@ -68,8 +65,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private float angleX = 0;
     private float angleY = 0;
-    // TODO
-    private float angleZ = 0;
+    private float angleZ = 0; // TODO
 
     private float[] eyePosition = new float[]{0, 0, 30};
 
@@ -166,18 +162,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         renderModel(drawable, modelBaby);
         gl.glPopMatrix();
 
-        gl.glUseProgram(0);
-
-        // Pour visualiser les lumières
-//        gl.glLoadIdentity();
-//        for(int i = 0; i < NUM_LIGHTS; ++i) {
-//		/* render sphere with the light's color/position */
-//            gl.glPushMatrix();
-//            gl.glTranslatef(lightPosition[i * 3], lightPosition[i * 3 + 1], lightPosition[i * 3 + 2]);
-//            gl.glColor3fv(FloatBuffer.wrap(new float[]{1, 1, 1}));
-//            glut.glutSolidSphere(0.1, 36, 36);
-//            gl.glPopMatrix();
-//        }
+        babyShaderControl.stopUsingShaderProgram(gl);
     }
 
     @Override
@@ -295,12 +280,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     private void drawSphere(GLAutoDrawable drawable, int radius, int slices, int stacks) {
         GL2 gl = drawable.getGL().getGL2();
 
-//        if (uterusTexture == null) {
-//            throw new RuntimeException("Error : no texture for the sphere");
-//        } else {
-//            uterusTexture.enable(gl);
-//            uterusTexture.bind(gl);
-//        }
+        gl.glPushMatrix();
 
         GLUquadric sphere = glu.gluNewQuadric();
         glu.gluQuadricTexture(sphere, true);
@@ -309,9 +289,15 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         glu.gluQuadricOrientation(sphere, GLU.GLU_OUTSIDE);
         glu.gluSphere(sphere, radius, slices, stacks);
         glu.gluDeleteQuadric(sphere);
+
+        gl.glPopMatrix();
     }
 
     private void initInputMap() {
+        // Animation
+        // Aa
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.LOWER_A.key()), ActionEnum.START_ANIMATION.action());
+        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.UPPER_A.key()), ActionEnum.START_ANIMATION.action());
         // Rotations : Xx Yy Zz
         // Xx
         this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.LOWER_X.key()), ActionEnum.LESS_ANGLE_X.action());
@@ -351,6 +337,9 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     }
 
     private void initActionMap() {
+        // Animation
+        this.getActionMap().put(ActionEnum.START_ANIMATION.action(), new ActionStartAnimation());
+
         // Angles
         this.getActionMap().put(ActionEnum.LESS_ANGLE_X.action(), new ActionLessAngleX());
         this.getActionMap().put(ActionEnum.PLUS_ANGLE_X.action(), new ActionPlusAngleX());
@@ -366,6 +355,14 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         this.getActionMap().put(ActionEnum.PLUS_DIST_Y.action(), new ActionPlusEyeY());
         this.getActionMap().put(ActionEnum.LESS_DIST_Z.action(), new ActionLessEyeZ());
         this.getActionMap().put(ActionEnum.PLUS_DIST_Z.action(), new ActionPlusEyeZ());
+    }
+
+    private class ActionStartAnimation extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            // TODO
+        }
     }
 
     private class ActionLessAngleX extends AbstractAction {

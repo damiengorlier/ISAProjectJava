@@ -1,6 +1,8 @@
 package ac.ulb.enums;
 
 public enum KeyEnum {
+    LOWER_A("A"),
+    UPPER_A("shift A"),
     LOWER_D("D"),
     UPPER_D("shift D"),
     LOWER_I("I"),
