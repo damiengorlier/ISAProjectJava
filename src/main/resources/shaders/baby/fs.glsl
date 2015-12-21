@@ -10,7 +10,7 @@ const vec3 LIGHT_COLOR = vec3(1.0, 1.0, 1.0);
 const float SHININESS_COEFF = 64.0;
 const float MATERIAL_THICKENESS = 0.6;
 const vec3 EXTINCTION_COEFF = vec3(0.8, 0.12, 0.2);
-const vec4 BASE_COLOR = vec4(225.0/255.0, 76.0/255.0, 60.0/255.0, 1.0);
+const vec4 BASE_COLOR = vec4(100.0/255.0, 75.0/255.0, 25.0/255.0, 1.0);
 const vec3 SPECULAR_COLOR = vec3(0.9, 0.9, 0.9);
 const float RIM_SCALAR = 1.0;
 
@@ -57,7 +57,7 @@ void main()
         // Compute N.H
         float NdotH = dot(Neye,Heye);
 
-        float waxAttenuation = 8 * (1.0 / length(lightVector));
+        float waxAttenuation = 7 * (1.0 / length(lightVector));
 
         vec3 indirectLightComponent = vec3(MATERIAL_THICKENESS * max(0.0,dot(-Neye,Leye)));
         indirectLightComponent += MATERIAL_THICKENESS * halfLambert(-Veye,Leye);
