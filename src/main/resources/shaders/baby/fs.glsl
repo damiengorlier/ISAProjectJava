@@ -5,19 +5,20 @@
 #version 130
 
 const int NUM_LIGHTS = 6;
-const vec3 AMBIENT = vec3(0.1, 0.1, 0.1);
 const vec3 LIGHT_COLOR = vec3(1.0, 1.0, 1.0);
-const float SHININESS_COEFF = 64.0;
+const float SHININESS_COEFF = 200.0;
 const float MATERIAL_THICKENESS = 0.6;
 const vec3 EXTINCTION_COEFF = vec3(0.8, 0.12, 0.2);
 const vec4 BASE_COLOR = vec4(100.0/255.0, 75.0/255.0, 25.0/255.0, 1.0);
 const vec3 SPECULAR_COLOR = vec3(0.9, 0.9, 0.9);
 const float RIM_SCALAR = 1.0;
+const float LIGHT_RADIUS = 15;
+const float AMBIENT_COEFF = 0.1;
 
 // Attenuation factors : 1 / (Kc + Kl * dist + Kq * dist²)
-const float Kc = 0.0;
-const float Kl = 0.2;
-const float Kq = 0.01;
+const float Kc = 1.0;
+const float Kl = 2/LIGHT_RADIUS;
+const float Kq = 1/(LIGHT_RADIUS*LIGHT_RADIUS);
 
 uniform vec3 lightPosition[NUM_LIGHTS];
 
@@ -39,6 +40,9 @@ void main()
     vec3 diffuse = vec3(0.0, 0.0, 0.0);
     vec3 wax = vec3(0.0, 0.0, 0.0);
     vec3 specular = vec3(0.0, 0.0, 0.0);
+	
+	vec3 ambient = AMBIENT_COEFF * vec3(1.0, 1.0, 1.0);
+	ambient *= BASE_COLOR.rgb;
 
     for(int i = 0; i < NUM_LIGHTS; i++) {
 
@@ -77,7 +81,7 @@ void main()
         specular += SPECULAR_COLOR * pow(clamp(NdotH, 0.0, 1.0), SHININESS_COEFF) * attFactor * BASE_COLOR.a;
     }
 
-    gl_FragColor = vec4(clamp(AMBIENT + diffuse + wax + specular, 0.0, 1.0), BASE_COLOR.a);
+    gl_FragColor = vec4(clamp(ambient + diffuse + wax + specular, 0.0, 1.0), BASE_COLOR.a);
 }
 
 float distanceAttenuation(vec3 lightVector) {
