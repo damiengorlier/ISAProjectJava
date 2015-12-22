@@ -1,6 +1,9 @@
 package ac.ulb.enums;
 
 public enum ActionEnum {
+	//Reset
+	RESET("reset"),
+	
     // Animation
     START_ANIMATION("startAnimation"),
 

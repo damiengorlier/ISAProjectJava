@@ -18,6 +18,8 @@ import java.awt.event.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.FloatBuffer;
+import java.time.Duration;
+import java.time.Instant;
 
 public class MainRenderer extends GLJPanel implements GLEventListener {
 
@@ -66,6 +68,10 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     private float angleX = 0;
     private float angleY = 0;
     private float angleZ = 0; // TODO
+    
+    private float positionX = 0;
+    private float positionY = 0;
+    private float positionZ = 0;
 
     private float[] eyePosition = new float[]{0, 0, 30};
 
@@ -159,6 +165,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         gl.glPushMatrix();
         updateRotations(drawable);
+        updateTranslation(drawable);
         renderModel(drawable, modelBaby);
         gl.glPopMatrix();
 
@@ -276,6 +283,11 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         gl.glRotatef(angleY, 0, 1, 0);
         gl.glRotatef(angleZ, 0, 0, 1);
     }
+    
+    private void updateTranslation(GLAutoDrawable drawable){
+    	GL2 gl = drawable.getGL().getGL2();
+    	gl.glTranslatef(positionX, positionY, positionZ);
+    }
 
     private void drawSphere(GLAutoDrawable drawable, int radius, int slices, int stacks) {
         GL2 gl = drawable.getGL().getGL2();
@@ -294,6 +306,10 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     }
 
     private void initInputMap() {
+    	//Reset
+    	//space bar
+    	this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.SPACE_BAR.key()), ActionEnum.RESET.action());
+    	
         // Animation
         // Aa
         this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.LOWER_A.key()), ActionEnum.START_ANIMATION.action());
@@ -337,6 +353,9 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     }
 
     private void initActionMap() {
+    	//Reset
+    	this.getActionMap().put(ActionEnum.RESET.action(), new ActionReset());
+    	
         // Animation
         this.getActionMap().put(ActionEnum.START_ANIMATION.action(), new ActionStartAnimation());
 
@@ -356,12 +375,83 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         this.getActionMap().put(ActionEnum.LESS_DIST_Z.action(), new ActionLessEyeZ());
         this.getActionMap().put(ActionEnum.PLUS_DIST_Z.action(), new ActionPlusEyeZ());
     }
+    
+    private class ActionReset extends AbstractAction {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+        	angleX = 0;
+        	angleY = 0;
+        	angleZ = 0;
+        	positionX = 0;
+        	positionY = 0;
+        	positionZ = 0;
+        }
+    }
 
     private class ActionStartAnimation extends AbstractAction {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            // TODO
+        	int STEP_TIME = 10000000;
+    		Instant first = Instant.now();
+        	Instant second = Instant.now();
+        	Duration duration = Duration.between(first, second);
+        	while(angleX != 0){
+            	first = Instant.now();
+            	second = Instant.now();
+            	duration = Duration.between(first, second);
+                while (duration.getNano() < STEP_TIME){
+                	second = Instant.now();
+                	duration = Duration.between(first, second);
+                }
+        		angleX += 1;
+                if (angleX >= 360) {
+                    angleX -= 360;
+                }
+                display();
+        	}
+        	
+        	while (angleY != 0){
+        		first = Instant.now();
+            	second = Instant.now();
+            	duration = Duration.between(first, second);
+                while (duration.getNano() < STEP_TIME){
+                	second = Instant.now();
+                	duration = Duration.between(first, second);
+                }
+        		angleY += 1;
+                if (angleY >= 360) {
+                    angleY -= 360;
+                }
+                display();
+        	}
+        	
+        	while (angleZ != 0){
+        		first = Instant.now();
+            	second = Instant.now();
+            	duration = Duration.between(first, second);
+                while (duration.getNano() < STEP_TIME){
+                	second = Instant.now();
+                	duration = Duration.between(first, second);
+                }
+        		angleZ += 1;
+                if (angleZ >= 360) {
+                    angleZ -= 360;
+                }
+                display();
+        	}
+        	while (positionY != 20){
+        		first = Instant.now();
+            	second = Instant.now();
+            	duration = Duration.between(first, second);
+                while (duration.getNano() < STEP_TIME){
+                	second = Instant.now();
+                	duration = Duration.between(first, second);
+                }
+        		positionY += 0.125;
+                display();
+        	}
         }
     }
 
