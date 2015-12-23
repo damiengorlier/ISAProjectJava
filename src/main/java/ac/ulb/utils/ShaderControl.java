@@ -16,7 +16,6 @@ public class ShaderControl {
     private String[] vsrc;
     private String[] fsrc;
 
-    // this will attach the shaders
     public void init(GL2 gl) {
         try {
             attachShaders(gl);
@@ -25,9 +24,6 @@ public class ShaderControl {
         }
     }
 
-    // loads the shaders
-    // in this example we assume that the shader is a file located in the applications JAR file.
-    //
     public static String[] loadShader(String name) {
         StringBuilder sb = new StringBuilder();
         try {
@@ -42,14 +38,10 @@ public class ShaderControl {
         } catch (Exception e) {
             e.printStackTrace();
         }
-//        System.out.println("Shader is " + sb.toString());
         return new String[]
                 {sb.toString()};
     }
 
-    // This compiles and loads the shader to the video card.
-    // if there is a problem with the source the program will exit at this point.
-    //
     private void attachShaders(GL2 gl) throws Exception {
         vertexShaderProgram = gl.glCreateShader(GL2.GL_VERTEX_SHADER);
         fragmentShaderProgram = gl.glCreateShader(GL2.GL_FRAGMENT_SHADER);
@@ -58,7 +50,7 @@ public class ShaderControl {
         gl.glShaderSource(fragmentShaderProgram, 1, fsrc, null, 0);
         gl.glCompileShader(fragmentShaderProgram);
         shaderProgram = gl.glCreateProgram();
-        //
+
         gl.glAttachShader(shaderProgram, vertexShaderProgram);
         gl.glAttachShader(shaderProgram, fragmentShaderProgram);
         gl.glLinkProgram(shaderProgram);
