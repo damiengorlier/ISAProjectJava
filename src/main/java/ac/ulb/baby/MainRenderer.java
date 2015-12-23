@@ -68,7 +68,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 	private float babyShift = (float) 4.5;
 
 	private float[] babyAngle = new float[] {0,0,0};
-	
+
 	private float[] babyPosition = new float[] {0,-babyShift,0};
 
 	private float scaleX = (float) 1.1;
@@ -93,39 +93,22 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     };
 
     // Bezier
-    //close
-//    private static final float[][][] CP_SPHERE_UP_4D = {
-//            {{ 0, 0, 1, 9},   { 0, 0, 1, 3},   { 0, 0, 1, 3},   { 0, 0, 1, 9}},
-//            {{ 2, 0, 1, 3},   { 2, 4, 1, 1},   {-2, 4, 1, 1},   {-2, 0, 1, 3}},
-//            {{ 2, 0,-1, 3},   { 2, 4,-1, 1},   {-2, 4,-1, 1},   {-2, 0,-1, 3}},
-//            {{ 0, 0,-1, 9},   { 0, 0,-1, 3},   { 0, 0,-1, 3},   { 0, 0,-1, 9}}
-//    };
-//    private static final float[][][] CP_SPHERE_DOWN_4D = {
-//            {{ 0, 0, 1, 9},   { 0, 0, 1, 3},   { 0, 0, 1, 3},   { 0, 0, 1, 9}},
-//            {{ 2, 0, 1, 3},   { 2,-4, 1, 1},   {-2,-4, 1, 1},   {-2, 0, 1, 3}},
-//            {{ 2, 0,-1, 3},   { 2,-4,-1, 1},   {-2,-4,-1, 1},   {-2, 0,-1, 3}},
-//            {{ 0, 0,-1, 9},   { 0, 0,-1, 3},   { 0, 0,-1, 3},   { 0, 0,-1, 9}}
-//    };
-    
-    //open
     private static final float[][][] CP_SPHERE_UP_4D = {
             {{ 0, 0, 1, 9},   { 0, 0, 1, 3},   { 0, 0, 1, 3},   { 0, 0, 1, 9}},
-            {{ 2, 0, 1, 3},   { 2, 4, 1, 1},   {-2, 4, 1, 1},   {-2, 0.5f, 1, 3}},
-            {{ 2, 0,-1, 3},   { 2, 4,-1, 1},   {-2, 4,-1, 1},   {-2, 0.5f,-1, 3}},
+            {{ 2, 0, 1, 3},   { 2, 4, 1, 1},   {-2, 4, 1, 1},   {-2, 0, 1, 3}},
+            {{ 2, 0,-1, 3},   { 2, 4,-1, 1},   {-2, 4,-1, 1},   {-2, 0,-1, 3}},
             {{ 0, 0,-1, 9},   { 0, 0,-1, 3},   { 0, 0,-1, 3},   { 0, 0,-1, 9}}
     };
     private static final float[][][] CP_SPHERE_DOWN_4D = {
             {{ 0, 0, 1, 9},   { 0, 0, 1, 3},   { 0, 0, 1, 3},   { 0, 0, 1, 9}},
-            {{ 2, 0, 1, 3},   { 2,-4, 1, 1},   {-2,-4, 1, 1},   {-2, -0.5f, 1, 3}},
-            {{ 2, 0,-1, 3},   { 2,-4,-1, 1},   {-2,-4,-1, 1},   {-2, -0.5f,-1, 3}},
+            {{ 2, 0, 1, 3},   { 2,-4, 1, 1},   {-2,-4, 1, 1},   {-2, 0, 1, 3}},
+            {{ 2, 0,-1, 3},   { 2,-4,-1, 1},   {-2,-4,-1, 1},   {-2, 0,-1, 3}},
             {{ 0, 0,-1, 9},   { 0, 0,-1, 3},   { 0, 0,-1, 3},   { 0, 0,-1, 9}}
     };
     private static final int NBR_SAMPLE_POINTS = 20;
 
     private float[][][] controlPointsSphereUP4D;
     private float[][][] controlPointsSphereDOWN4D;
-
-    private boolean computeSphere = false;
 
     private RationalBezierSurface sphereSurfaceUp;
     private RationalBezierSurface sphereSurfaceDown;
@@ -210,9 +193,6 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 		gl.glActiveTexture(GL.GL_TEXTURE1);
 		uterusBump.bind(gl);
 
-        if(computeSphere) {
-            computeRationalBezierSphere();
-        }
         renderRationalBezierSphere(drawable);
 
 		babyShaderControl.useShaderProgram(gl);
@@ -397,9 +377,9 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         gl.glRotatef(babyAngle[0], 1, 0, 0);
         gl.glRotatef(babyAngle[1], 0, 1, 0);
         gl.glRotatef(babyAngle[2], 0, 0, 1);
-        System.out.println("angleX : " + babyAngle[0]);
-        System.out.println("angleY : " + babyAngle[1]);
-        System.out.println("angleZ : " + babyAngle[2]);
+//        System.out.println("angleX : " + babyAngle[0]);
+//        System.out.println("angleY : " + babyAngle[1]);
+//        System.out.println("angleZ : " + babyAngle[2]);
     }
 
 	private void updateTranslation(GLAutoDrawable drawable) {
@@ -557,65 +537,96 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 	}
 
 	private class ActionStartAnimation extends AbstractAction {
-		
-		private void rotateBaby(float[] newAngle, int stepTime){
-			Instant first = Instant.now();
-			Instant second = Instant.now();
-			Duration duration = Duration.between(first, second);
-			for (int i =0; i<3; i++ )
-			while (babyAngle[i] != newAngle[i]) {
-				first = Instant.now();
-				second = Instant.now();
-				duration = Duration.between(first, second);
-				while (duration.getNano() < stepTime) {
-					second = Instant.now();
-					duration = Duration.between(first, second);
-				}
-				float inf = newAngle[i]-180;
-				float sup = newAngle[i];				
-				if (inf<0){
-					sup = inf+360;
-					inf = newAngle[i];
-				}
 
-				if ( inf<babyAngle[i] & babyAngle[i] < sup) {
-					babyAngle[i] += 1;
-					if (babyAngle[i] >= 360) {
-						babyAngle[i] -= 360;
-					}
-				} else {
-					babyAngle[i] -= 1;
-					if (babyAngle[i] < 0) {
-						babyAngle[i] += 360;
-					}
-				}
-				display();
-			}			
+		private final int STEP_TIME = 10000000;
+		private final float[] END_EYE_POSITION = {0,0,R*4};
+		private final float[] OUT_ANGLE = {270,0,180};
+		private final float[] END_ANGLE = {0,0,0};
+		private final float[] END_POSITION = {0, R, 0};
+        private final float MAX_OPENING = 0.75f;
+        private final float STEP_OPENING = 0.01f;
+
+		private void openUterus(float maxOpening, float stepOpening, int stepTime) {
+            Instant first;
+            Instant second;
+            Duration duration;
+            while(controlPointsSphereUP4D[1][3][1] < (maxOpening * R)) {
+                first = Instant.now();
+                second = Instant.now();
+                duration = Duration.between(first, second);
+                while (duration.getNano() < stepTime) {
+                    second = Instant.now();
+                    duration = Duration.between(first, second);
+                }
+                controlPointsSphereUP4D[1][3][1] += (stepOpening * R);
+                controlPointsSphereUP4D[2][3][1] += (stepOpening * R);
+                controlPointsSphereDOWN4D[1][3][1] -= (stepOpening * R);
+                controlPointsSphereDOWN4D[2][3][1] -= (stepOpening * R);
+                computeRationalBezierSphere();
+                display();
+            }
+
 		}
-		
+
+		private void rotateBaby(float[] newAngle, int stepTime){
+			Instant first;
+			Instant second;
+			Duration duration;
+			for (int i =0; i<3; i++ ) {
+                while (babyAngle[i] != newAngle[i]) {
+                    first = Instant.now();
+                    second = Instant.now();
+                    duration = Duration.between(first, second);
+                    while (duration.getNano() < stepTime) {
+                        second = Instant.now();
+                        duration = Duration.between(first, second);
+                    }
+                    float inf = newAngle[i] - 180;
+                    float sup = newAngle[i];
+                    if (inf < 0) {
+                        sup = inf + 360;
+                        inf = newAngle[i];
+                    }
+
+                    if (inf < babyAngle[i] & babyAngle[i] < sup) {
+                        babyAngle[i] += 1;
+                        if (babyAngle[i] >= 360) {
+                            babyAngle[i] -= 360;
+                        }
+                    } else {
+                        babyAngle[i] -= 1;
+                        if (babyAngle[i] < 0) {
+                            babyAngle[i] += 360;
+                        }
+                    }
+                    display();
+                }
+			}
+		}
+
 		private void translateBaby(float[] newPosition, int stepTime){
-			Instant first = Instant.now();
-			Instant second = Instant.now();
-			Duration duration = Duration.between(first, second);
+			Instant first;
+			Instant second;
+			Duration duration;
 			for (int i =0; i <3; i++){
-			while (babyPosition[i] != newPosition[i]) {
-				first = Instant.now();
-				second = Instant.now();
-				duration = Duration.between(first, second);
-				while (duration.getNano() < stepTime) {
-					second = Instant.now();
-					duration = Duration.between(first, second);
-				}
-				babyPosition[i] += 0.125;
-				display();
-			}
+                while (babyPosition[i] != newPosition[i]) {
+                    first = Instant.now();
+                    second = Instant.now();
+                    duration = Duration.between(first, second);
+                    while (duration.getNano() < stepTime) {
+                        second = Instant.now();
+                        duration = Duration.between(first, second);
+                    }
+                    babyPosition[i] += 0.125;
+                    display();
+                }
 			}
 		}
-		
+
 		private void moveView(float[] newEyePosition, int stepTime){
-			Instant first = Instant.now();
-			Instant second = Instant.now();
-			Duration duration = Duration.between(first, second);
+			Instant first;
+			Instant second;
+			Duration duration;
 			for (int i=0; i<3; i++){
 				while (eyePosition[i]!= newEyePosition[i]) {
 					first = Instant.now();
@@ -633,28 +644,22 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			int STEP_TIME = 10000000;
-			
-			float[] END_EYE_POSITION = {0,0,R*4};
-			
-			float[] OUT_ANGLE = {270,0,180};
-			
-			float[] END_ANGLE = {0,0,0};
-			
-			float[] END_POSITION = {0, R, 0};
 
 
 			//move back view
 			moveView(END_EYE_POSITION, STEP_TIME);
+
+            //cut in the uterus
+            openUterus(MAX_OPENING, STEP_OPENING, STEP_TIME);
 
 			//head of baby in direction of sphere opening
 			rotateBaby(OUT_ANGLE, STEP_TIME);
 
 			//put off the baby
 			translateBaby(END_POSITION, STEP_TIME);
-			
+
 			//baby in initial position
-			//rotateBaby(END_ANGLE, STEP_TIME); // je dois vérifier les conditions sur le changement des angles
+			//rotateBaby(END_ANGLE, STEP_TIME); // je dois vï¿½rifier les conditions sur le changement des angles
 		}
 	}
 
