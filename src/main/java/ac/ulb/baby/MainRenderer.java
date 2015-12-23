@@ -67,13 +67,9 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
 	private float babyShift = (float) 4.5;
 
-	private float angleX = 0;
-	private float angleY = 0;
-	private float angleZ = 0; // TODO
-
-	private float positionX = 0;
-	private float positionY = -babyShift;
-	private float positionZ = 0;
+	private float[] babyAngle = new float[] {0,0,0};
+	
+	private float[] babyPosition = new float[] {0,-babyShift,0};
 
 	private float scaleX = (float) 1.1;
 	private float scaleY = (float) 1.1;
@@ -97,16 +93,31 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     };
 
     // Bezier
+    //close
+//    private static final float[][][] CP_SPHERE_UP_4D = {
+//            {{ 0, 0, 1, 9},   { 0, 0, 1, 3},   { 0, 0, 1, 3},   { 0, 0, 1, 9}},
+//            {{ 2, 0, 1, 3},   { 2, 4, 1, 1},   {-2, 4, 1, 1},   {-2, 0, 1, 3}},
+//            {{ 2, 0,-1, 3},   { 2, 4,-1, 1},   {-2, 4,-1, 1},   {-2, 0,-1, 3}},
+//            {{ 0, 0,-1, 9},   { 0, 0,-1, 3},   { 0, 0,-1, 3},   { 0, 0,-1, 9}}
+//    };
+//    private static final float[][][] CP_SPHERE_DOWN_4D = {
+//            {{ 0, 0, 1, 9},   { 0, 0, 1, 3},   { 0, 0, 1, 3},   { 0, 0, 1, 9}},
+//            {{ 2, 0, 1, 3},   { 2,-4, 1, 1},   {-2,-4, 1, 1},   {-2, 0, 1, 3}},
+//            {{ 2, 0,-1, 3},   { 2,-4,-1, 1},   {-2,-4,-1, 1},   {-2, 0,-1, 3}},
+//            {{ 0, 0,-1, 9},   { 0, 0,-1, 3},   { 0, 0,-1, 3},   { 0, 0,-1, 9}}
+//    };
+    
+    //open
     private static final float[][][] CP_SPHERE_UP_4D = {
             {{ 0, 0, 1, 9},   { 0, 0, 1, 3},   { 0, 0, 1, 3},   { 0, 0, 1, 9}},
-            {{ 2, 0, 1, 3},   { 2, 4, 1, 1},   {-2, 4, 1, 1},   {-2, 0, 1, 3}},
-            {{ 2, 0,-1, 3},   { 2, 4,-1, 1},   {-2, 4,-1, 1},   {-2, 0,-1, 3}},
+            {{ 2, 0, 1, 3},   { 2, 4, 1, 1},   {-2, 4, 1, 1},   {-2, 0.5f, 1, 3}},
+            {{ 2, 0,-1, 3},   { 2, 4,-1, 1},   {-2, 4,-1, 1},   {-2, 0.5f,-1, 3}},
             {{ 0, 0,-1, 9},   { 0, 0,-1, 3},   { 0, 0,-1, 3},   { 0, 0,-1, 9}}
     };
     private static final float[][][] CP_SPHERE_DOWN_4D = {
             {{ 0, 0, 1, 9},   { 0, 0, 1, 3},   { 0, 0, 1, 3},   { 0, 0, 1, 9}},
-            {{ 2, 0, 1, 3},   { 2,-4, 1, 1},   {-2,-4, 1, 1},   {-2, 0, 1, 3}},
-            {{ 2, 0,-1, 3},   { 2,-4,-1, 1},   {-2,-4,-1, 1},   {-2, 0,-1, 3}},
+            {{ 2, 0, 1, 3},   { 2,-4, 1, 1},   {-2,-4, 1, 1},   {-2, -0.5f, 1, 3}},
+            {{ 2, 0,-1, 3},   { 2,-4,-1, 1},   {-2,-4,-1, 1},   {-2, -0.5f,-1, 3}},
             {{ 0, 0,-1, 9},   { 0, 0,-1, 3},   { 0, 0,-1, 3},   { 0, 0,-1, 9}}
     };
     private static final int NBR_SAMPLE_POINTS = 20;
@@ -383,14 +394,17 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private void updateRotations(GLAutoDrawable drawable) {
         GL2 gl = drawable.getGL().getGL2();
-        gl.glRotatef(angleX, 1, 0, 0);
-        gl.glRotatef(angleY, 0, 1, 0);
-        gl.glRotatef(angleZ, 0, 0, 1);
+        gl.glRotatef(babyAngle[0], 1, 0, 0);
+        gl.glRotatef(babyAngle[1], 0, 1, 0);
+        gl.glRotatef(babyAngle[2], 0, 0, 1);
+        System.out.println("angleX : " + babyAngle[0]);
+        System.out.println("angleY : " + babyAngle[1]);
+        System.out.println("angleZ : " + babyAngle[2]);
     }
 
 	private void updateTranslation(GLAutoDrawable drawable) {
 		GL2 gl = drawable.getGL().getGL2();
-		gl.glTranslatef(positionX, positionY, positionZ);
+		gl.glTranslatef(babyPosition[0], babyPosition[1], babyPosition[2]);
 	}
 
 	private void updateScale(GLAutoDrawable drawable) {
@@ -534,125 +548,113 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			angleX = 320;
-			angleY = 0;
-			angleZ = 90;
+			babyAngle = new float[] {0,0,0};
 
-			positionX = 0;
-			positionY = -babyShift;
-			positionZ = 0;
+			babyPosition = new float[] {0,-babyShift,0};
 
-			eyePosition[2] = R;
+			eyePosition = new float[] {0,0,R};
 		}
 	}
 
 	private class ActionStartAnimation extends AbstractAction {
+		
+		private void rotateBaby(float[] newAngle, int stepTime){
+			Instant first = Instant.now();
+			Instant second = Instant.now();
+			Duration duration = Duration.between(first, second);
+			for (int i =0; i<3; i++ )
+			while (babyAngle[i] != newAngle[i]) {
+				first = Instant.now();
+				second = Instant.now();
+				duration = Duration.between(first, second);
+				while (duration.getNano() < stepTime) {
+					second = Instant.now();
+					duration = Duration.between(first, second);
+				}
+				float inf = newAngle[i]-180;
+				float sup = newAngle[i];				
+				if (inf<0){
+					sup = inf+360;
+					inf = newAngle[i];
+				}
+
+				if ( inf<babyAngle[i] & babyAngle[i] < sup) {
+					babyAngle[i] += 1;
+					if (babyAngle[i] >= 360) {
+						babyAngle[i] -= 360;
+					}
+				} else {
+					babyAngle[i] -= 1;
+					if (babyAngle[i] < 0) {
+						babyAngle[i] += 360;
+					}
+				}
+				display();
+			}			
+		}
+		
+		private void translateBaby(float[] newPosition, int stepTime){
+			Instant first = Instant.now();
+			Instant second = Instant.now();
+			Duration duration = Duration.between(first, second);
+			for (int i =0; i <3; i++){
+			while (babyPosition[i] != newPosition[i]) {
+				first = Instant.now();
+				second = Instant.now();
+				duration = Duration.between(first, second);
+				while (duration.getNano() < stepTime) {
+					second = Instant.now();
+					duration = Duration.between(first, second);
+				}
+				babyPosition[i] += 0.125;
+				display();
+			}
+			}
+		}
+		
+		private void moveView(float[] newEyePosition, int stepTime){
+			Instant first = Instant.now();
+			Instant second = Instant.now();
+			Duration duration = Duration.between(first, second);
+			for (int i=0; i<3; i++){
+				while (eyePosition[i]!= newEyePosition[i]) {
+					first = Instant.now();
+					second = Instant.now();
+					duration = Duration.between(first, second);
+					while (duration.getNano() < stepTime) {
+						second = Instant.now();
+						duration = Duration.between(first, second);
+					}
+					eyePosition[i] += 0.125;
+					display();
+				}
+			}
+		}
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			int STEP_TIME = 10000000;
-			float END_BABY_POSITION = R;
-			int END_EYE_POSITION = R*4;
+			
+			float[] END_EYE_POSITION = {0,0,R*4};
+			
+			float[] OUT_ANGLE = {270,0,180};
+			
+			float[] END_ANGLE = {0,0,0};
+			
+			float[] END_POSITION = {0, R, 0};
 
-			int END_ANGLE_X = 270;
-			int END_ANGLE_Y = 0;
-			int END_ANGLE_Z = 180;
-
-			Instant first = Instant.now();
-			Instant second = Instant.now();
-			Duration duration = Duration.between(first, second);
 
 			//move back view
-			while (eyePosition[2] != END_EYE_POSITION) {
-				first = Instant.now();
-				second = Instant.now();
-				duration = Duration.between(first, second);
-				while (duration.getNano() < STEP_TIME) {
-					second = Instant.now();
-					duration = Duration.between(first, second);
-				}
-				eyePosition[2] += 0.125;
-				display();
-			}
+			moveView(END_EYE_POSITION, STEP_TIME);
 
-			//rotate the baby
-			while (angleX != END_ANGLE_X) {
-				first = Instant.now();
-				second = Instant.now();
-				duration = Duration.between(first, second);
-				while (duration.getNano() < STEP_TIME) {
-					second = Instant.now();
-					duration = Duration.between(first, second);
-				}
-				if ( END_ANGLE_X-180<angleX & angleX < END_ANGLE_X) {
-					angleX += 1;
-					if (angleX >= 360) {
-						angleX -= 360;
-					}
-				} else {
-					angleX -= 1;
-					if (angleX < 0) {
-						angleX += 360;
-					}
-				}
-				display();
-			}
-
-			while (angleY != END_ANGLE_Y) {
-				first = Instant.now();
-				second = Instant.now();
-				duration = Duration.between(first, second);
-				while (duration.getNano() < STEP_TIME) {
-					second = Instant.now();
-					duration = Duration.between(first, second);
-				}
-				if (angleY < 180) {
-					angleY -= 1;
-					if (angleY < 0) {
-						angleY += 360;
-					}
-				} else {
-					angleY += 1;
-					if (angleY >= 360) {
-						angleY -= 360;
-					}
-				}
-				display();
-			}
-
-			while (angleZ != 180) {
-				first = Instant.now();
-				second = Instant.now();
-				duration = Duration.between(first, second);
-				while (duration.getNano() < STEP_TIME) {
-					second = Instant.now();
-					duration = Duration.between(first, second);
-				}
-				if (END_ANGLE_Z-180<angleZ & angleZ < END_ANGLE_Z) {
-					angleZ += 1;
-					if (angleZ >= 360) {
-						angleZ -= 360;
-					}
-				} else {
-					angleZ -= 1;
-					if (angleZ < 0) {
-						angleZ += 360;
-					}				}
-				display();
-			}
+			//head of baby in direction of sphere opening
+			rotateBaby(OUT_ANGLE, STEP_TIME);
 
 			//put off the baby
-			while (positionY != END_BABY_POSITION) {
-				first = Instant.now();
-				second = Instant.now();
-				duration = Duration.between(first, second);
-				while (duration.getNano() < STEP_TIME) {
-					second = Instant.now();
-					duration = Duration.between(first, second);
-				}
-				positionY += 0.125;
-				display();
-			}
+			translateBaby(END_POSITION, STEP_TIME);
+			
+			//baby in initial position
+			//rotateBaby(END_ANGLE, STEP_TIME); // je dois vérifier les conditions sur le changement des angles
 		}
 	}
 
@@ -660,9 +662,9 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			angleX -= 5;
-			if (angleX < 0) {
-				angleX += 360;
+			babyAngle[0] -= 5;
+			if (babyAngle[0] < 0) {
+				babyAngle[0] += 360;
 			}
 		}
 	}
@@ -671,9 +673,9 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			angleX += 5;
-			if (angleX > 360) {
-				angleX -= 360;
+			babyAngle[0] += 5;
+			if (babyAngle[0] > 360) {
+				babyAngle[0] -= 360;
 			}
 		}
 	}
@@ -682,9 +684,9 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			angleY -= 5;
-			if (angleY < 0) {
-				angleY += 360;
+			babyAngle[1] -= 5;
+			if (babyAngle[1] < 0) {
+				babyAngle[1] += 360;
 			}
 		}
 	}
@@ -693,9 +695,9 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			angleY += 5;
-			if (angleY > 360) {
-				angleY -= 360;
+			babyAngle[1] += 5;
+			if (babyAngle[1] > 360) {
+				babyAngle[1] -= 360;
 			}
 		}
 	}
@@ -704,9 +706,9 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			angleZ -= 5;
-			if (angleZ < 0) {
-				angleZ += 360;
+			babyAngle[2] -= 5;
+			if (babyAngle[2] < 0) {
+				babyAngle[2] += 360;
 			}
 		}
 	}
@@ -715,9 +717,9 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			angleZ += 5;
-			if (angleZ > 360) {
-				angleZ -= 360;
+			babyAngle[2] += 5;
+			if (babyAngle[2] > 360) {
+				babyAngle[2] -= 360;
 			}
 		}
 	}
@@ -808,8 +810,8 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 			} else if (mouseSecondPressed) {
 				float thetaY = 360 * (x - prevMouseX) / getWidth();
 				float thetaX = 360 * (y - prevMouseY) / getHeight();
-				angleX += thetaX;
-				angleY += thetaY;
+				babyAngle[0] += thetaX;
+				babyAngle[1] += thetaY;
 			}
 			prevMouseX = x;
 			prevMouseY = y;
