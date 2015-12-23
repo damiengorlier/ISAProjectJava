@@ -67,9 +67,9 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
 	private float babyShift = (float) 4.5;
 
-	private float angleX = 320;
+	private float angleX = 0;
 	private float angleY = 0;
-	private float angleZ = 90; // TODO
+	private float angleZ = 0; // TODO
 
 	private float positionX = 0;
 	private float positionY = -babyShift;
@@ -411,26 +411,17 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 			int STEP_TIME = 10000000;
 			float END_BABY_POSITION = R;
 			int END_EYE_POSITION = R*4;
+			
+			int END_ANGLE_X = 270;
+			int END_ANGLE_Y = 0;
+			int END_ANGLE_Z = 180;
 
 			Instant first = Instant.now();
 			Instant second = Instant.now();
 			Duration duration = Duration.between(first, second);
 			
 			//move back view
-//			while (eyePosition[2] != END_EYE_POSITION) {
-//				first = Instant.now();
-//				second = Instant.now();
-//				duration = Duration.between(first, second);
-//				while (duration.getNano() < STEP_TIME) {
-//					second = Instant.now();
-//					duration = Duration.between(first, second);
-//				}
-//				eyePosition[2] += 0.125;
-//				display();
-//			}
-			
-			//rotate the baby
-			while (angleX != 0) {
+			while (eyePosition[2] != END_EYE_POSITION) {
 				first = Instant.now();
 				second = Instant.now();
 				duration = Duration.between(first, second);
@@ -438,21 +429,34 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 					second = Instant.now();
 					duration = Duration.between(first, second);
 				}
-				if (angleX < 180) {
-					angleX -= 1;
-					if (angleX < 0) {
-						angleX += 360;
-					}
-				} else {
+				eyePosition[2] += 0.125;
+				display();
+			}
+			
+			//rotate the baby
+			while (angleX != END_ANGLE_X) {
+				first = Instant.now();
+				second = Instant.now();
+				duration = Duration.between(first, second);
+				while (duration.getNano() < STEP_TIME) {
+					second = Instant.now();
+					duration = Duration.between(first, second);
+				}
+				if ( END_ANGLE_X-180<angleX & angleX < END_ANGLE_X) {
 					angleX += 1;
 					if (angleX >= 360) {
 						angleX -= 360;
+					}
+				} else {
+					angleX -= 1;
+					if (angleX < 0) {
+						angleX += 360;
 					}
 				}
 				display();
 			}
 
-			while (angleY != 0) {
+			while (angleY != END_ANGLE_Y) {
 				first = Instant.now();
 				second = Instant.now();
 				duration = Duration.between(first, second);
@@ -474,7 +478,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 				display();
 			}
 
-			while (angleZ != 0) {
+			while (angleZ != 180) {
 				first = Instant.now();
 				second = Instant.now();
 				duration = Duration.between(first, second);
@@ -482,17 +486,16 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 					second = Instant.now();
 					duration = Duration.between(first, second);
 				}
-				if (angleZ < 180) {
-					angleZ -= 1;
-					if (angleZ < 0) {
-						angleZ += 360;
-					}
-				} else {
+				if (END_ANGLE_Z-180<angleZ & angleZ < END_ANGLE_Z) {
 					angleZ += 1;
 					if (angleZ >= 360) {
 						angleZ -= 360;
 					}
-				}
+				} else {
+					angleZ -= 1;
+					if (angleZ < 0) {
+						angleZ += 360;
+					}				}
 				display();
 			}
 			
