@@ -12,8 +12,8 @@ const float AMBIENT_COEFF = 0.5;
 
 // Attenuation factors : 1 / (Kc + Kl * dist + Kq * dist²)
 const float Kc = 1.0;
-const float Kl = 2/LIGHT_RADIUS;
-const float Kq = 1/(LIGHT_RADIUS*LIGHT_RADIUS);
+const float Kl = 2.0/LIGHT_RADIUS;
+const float Kq = 1.0/(LIGHT_RADIUS*LIGHT_RADIUS);
 
 uniform vec3 lightPosition[NUM_LIGHTS];
 uniform sampler2D uterusTexture, uterusBumpMap;
@@ -40,7 +40,7 @@ void main()
     //** normal is based on the texture space coordinate basis.
     //**--------------------------------------------------------
     vec4 smoothOut = vec4(0.5, 0.5, 1.0,1.0);
-    float bumpiness = 0.8;
+    float bumpiness = 0.7;
 
     bump = mix( smoothOut, bump, bumpiness );
     bump = normalize( ( bump * 2.0 ) - 1.0 );
@@ -77,7 +77,7 @@ void main()
         specular += pow(clamp(NdotH, 0.0, 1.0), SHININESS_COEFF) * attFactor*texture.a;
     }
 
-    gl_FragColor = vec4(clamp(diffuse + ambient+ specular, 0.0, 1.0), texture.w);
+    gl_FragColor = vec4(clamp(diffuse + ambient+ specular, 0.0, 1.0), texture.a);
 }
 
 float distanceAttenuation(vec3 lightVector) {
