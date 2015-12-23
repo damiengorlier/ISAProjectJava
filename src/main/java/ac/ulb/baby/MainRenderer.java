@@ -1,13 +1,13 @@
 package ac.ulb.baby;
 
 import ac.ulb.enums.*;
+import ac.ulb.bezier.RationalBezierSurface;
 import ac.ulb.utils.ShaderControl;
 import com.jogamp.opengl.*;
 import com.jogamp.opengl.awt.GLJPanel;
 import com.jogamp.opengl.fixedfunc.GLLightingFunc;
 import com.jogamp.opengl.fixedfunc.GLMatrixFunc;
 import com.jogamp.opengl.glu.GLU;
-import com.jogamp.opengl.glu.GLUquadric;
 import com.jogamp.opengl.util.texture.Texture;
 import com.jogamp.opengl.util.texture.TextureData;
 import com.jogamp.opengl.util.texture.TextureIO;
@@ -39,14 +39,13 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 	private static final String BABY_SHADERS_PATH = "/baby";
 	private static final String TEST_SHADERS_PATH = "/test";
 
-	private static final String LIGHT_POSITION = "lightPosition";
-	private static final String UTERUS_TEXTURE = "uterusTexture";
-	private static final String UTERUS_BUMP_MAP = "uterusBumpMap";
+//    private static final String VERTEX_COORD = "vertexCoord";
+    private static final String LIGHT_POSITION = "lightPosition";
+    private static final String UTERUS_TEXTURE = "uterusTexture";
+    private static final String UTERUS_BUMP_MAP = "uterusBumpMap";
 
-	// Sphere parameters
-	private static final int R = 8;
-	private static final int SLICES = 32;
-	private static final int STACKS = 32;
+    // Sphere parameters
+    private static final int R = 8;
 
 	// Outils & Containers
 	private GLU glu;
@@ -54,11 +53,12 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 	private Texture uterusBump;
 	private OBJModel modelBaby;
 
-	// Sphere
-	private int sphereLightPositionLocation;
-	private int sphereUterusTextureLocation;
-	private int sphereUterusBumpMapLocation;
-	private ShaderControl sphereShaderControl;
+    // Sphere
+//    private int sphereAttributeVertexCoordLocation;
+    private int sphereLightPositionLocation;
+    private int sphereUterusTextureLocation;
+    private int sphereUterusBumpMapLocation;
+    private ShaderControl sphereShaderControl;
 
 	// Baby
 	private int babyLightPositionLocation;
@@ -87,12 +87,48 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 	private static final float[] POS_Y = { (float) Math.sin(Math.PI / 4), (float) -Math.sin(Math.PI / 4) };
 	private static final float[] POS_Z = { 0, (float) Math.sin(2 * Math.PI / 3), (float) -Math.sin(2 * Math.PI / 3) };
 
-	private float[] lightPosition = { R2 * POS_X[0], R2 * POS_Y[0], R2 * POS_Z[0], R2 * POS_X[0], R2 * POS_Y[1],
-			R2 * POS_Z[0], R2 * POS_X[1], R2 * POS_Y[0], R2 * POS_Z[1], R2 * POS_X[1], R2 * POS_Y[1], R2 * POS_Z[1],
-			R2 * POS_X[1], R2 * POS_Y[0], R2 * POS_Z[2], R2 * POS_X[1], R2 * POS_Y[1], R2 * POS_Z[2] };
+    private float[] lightPosition = {
+            R2 * POS_X[0], R2 * POS_Y[0], R2 * POS_Z[0],
+            R2 * POS_X[0], R2 * POS_Y[1], R2 * POS_Z[0],
+            R2 * POS_X[1], R2 * POS_Y[0], R2 * POS_Z[1],
+            R2 * POS_X[1], R2 * POS_Y[1], R2 * POS_Z[1],
+            R2 * POS_X[1], R2 * POS_Y[0], R2 * POS_Z[2],
+            R2 * POS_X[1], R2 * POS_Y[1], R2 * POS_Z[2]
+    };
 
-	private boolean mouseFirstPressed = false;
-	private boolean mouseSecondPressed = false;
+    // Bezier
+    private static final float[][][] CP_SPHERE_UP_4D = {
+            {{ 0, 0, 1, 9},   { 0, 0, 1, 3},   { 0, 0, 1, 3},   { 0, 0, 1, 9}},
+            {{ 2, 0, 1, 3},   { 2, 4, 1, 1},   {-2, 4, 1, 1},   {-2, 0, 1, 3}},
+            {{ 2, 0,-1, 3},   { 2, 4,-1, 1},   {-2, 4,-1, 1},   {-2, 0,-1, 3}},
+            {{ 0, 0,-1, 9},   { 0, 0,-1, 3},   { 0, 0,-1, 3},   { 0, 0,-1, 9}}
+    };
+    private static final float[][][] CP_SPHERE_DOWN_4D = {
+            {{ 0, 0, 1, 9},   { 0, 0, 1, 3},   { 0, 0, 1, 3},   { 0, 0, 1, 9}},
+            {{ 2, 0, 1, 3},   { 2,-4, 1, 1},   {-2,-4, 1, 1},   {-2, 0, 1, 3}},
+            {{ 2, 0,-1, 3},   { 2,-4,-1, 1},   {-2,-4,-1, 1},   {-2, 0,-1, 3}},
+            {{ 0, 0,-1, 9},   { 0, 0,-1, 3},   { 0, 0,-1, 3},   { 0, 0,-1, 9}}
+    };
+    private static final int NBR_SAMPLE_POINTS = 20;
+
+    private float[][][] controlPointsSphereUP4D;
+    private float[][][] controlPointsSphereDOWN4D;
+
+    private boolean computeSphere = false;
+
+    private RationalBezierSurface sphereSurfaceUp;
+    private RationalBezierSurface sphereSurfaceDown;
+
+//    // Buffers
+//    private static final int NBR_BUFFERS = 4;
+//    private int[] buffers = new int[NBR_BUFFERS];
+//    private static final int VERTICES_UP = 0;
+//    private static final int ELEMENTS_UP = 1;
+//    private static final int VERTICES_DOWN = 2;
+//    private static final int ELEMENTS_DOWN = 3;
+
+    private boolean mouseFirstPressed = false;
+    private boolean mouseSecondPressed = false;
 
 	private float prevMouseX;
 	private float prevMouseY;
@@ -116,20 +152,24 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 		drawable.setGL(new DebugGL2(gl));
 		glu = new GLU();
 
-		gl.glEnable(GL.GL_DEPTH_TEST);
-		gl.glEnable(GL.GL_TEXTURE_2D);
-		gl.glDepthFunc(GL.GL_LEQUAL);
-		gl.glHint(GL.GL_LINE_SMOOTH_HINT, GL.GL_NICEST);
-		gl.glShadeModel(GLLightingFunc.GL_SMOOTH);
-		gl.glClearColor(0f, 0f, 0f, 1f);
-		gl.glClearDepth(1f);
+        gl.glEnable(GL.GL_DEPTH_TEST);
+        gl.glEnable(GL.GL_TEXTURE_2D);
+        gl.glEnable(GL2.GL_AUTO_NORMAL);
+        gl.glDepthFunc(GL.GL_LEQUAL);
+        gl.glHint(GL.GL_LINE_SMOOTH_HINT, GL.GL_NICEST);
+        gl.glShadeModel(GLLightingFunc.GL_SMOOTH);
+        gl.glClearColor(0f, 0f, 0f, 1f);
+        gl.glClearDepth(1f);
 
 		initPerspective(drawable);
 
-		initShaders(drawable);
-		initTextures(drawable);
-		initBaby();
-	}
+        initBezierControlPoints();
+        computeRationalBezierSphere();
+//        initBuffers(drawable);
+        initShaders(drawable);
+        initTextures(drawable);
+        initModel();
+    }
 
 	@Override
 	public void dispose(GLAutoDrawable drawable) {
@@ -159,12 +199,15 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 		gl.glActiveTexture(GL.GL_TEXTURE1);
 		uterusBump.bind(gl);
 
-		drawSphere(drawable, R, SLICES, STACKS);
+        if(computeSphere) {
+            computeRationalBezierSphere();
+        }
+        renderRationalBezierSphere(drawable);
 
 		babyShaderControl.useShaderProgram(gl);
 		gl.glUniform3fv(babyLightPositionLocation, NUM_LIGHTS, FloatBuffer.wrap(lightPosition));
 		gl.glUniform1i(babyUterusTextureLocation, 0);
-		
+
 		gl.glActiveTexture(GL.GL_TEXTURE0);
 		uterusTexture.bind(gl);
 
@@ -198,60 +241,85 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 		gl.glLoadIdentity();
 	}
 
-	private void updateEye() {
-		glu.gluLookAt(eyePosition[0], eyePosition[1], eyePosition[2], eyePosition[0], eyePosition[1], 0, 0, 1, 0);
-	}
+//    private void initBuffers(GLAutoDrawable drawable) {
+//        GL2 gl = drawable.getGL().getGL2();
+//
+//        gl.glGenBuffers(1, buffers, VERTICES_UP);
+//        gl.glBindBuffer(GL.GL_ARRAY_BUFFER, buffers[VERTICES_UP]);
+//        {
+//            FloatBuffer vertexBuffer = GLBuffers.newDirectFloatBuffer(sphereVerticesArrayUP);
+//            int size = sphereVerticesUP.length * GLBuffers.SIZEOF_FLOAT;
+//            gl.glBufferData(GL4.GL_ARRAY_BUFFER, size, vertexBuffer, GL4.GL_STATIC_DRAW);
+//        }
+//
+//        gl.glGenBuffers(1, buffers, ELEMENTS_UP);
+//        gl.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, buffers[ELEMENTS_UP]);
+//        {
+//            IntBuffer elementBuffer = GLBuffers.newDirectIntBuffer(sphereElementsUP);
+//            int size = sphereElementsUP.length * GLBuffers.SIZEOF_FLOAT;
+//            gl.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, size, elementBuffer, GL4.GL_STATIC_DRAW);
+//        }
+//
+//        gl.glGenBuffers(1, buffers, VERTICES_DOWN);
+//        gl.glBindBuffer(GL.GL_ARRAY_BUFFER, buffers[VERTICES_DOWN]);
+//        {
+//            FloatBuffer vertexBuffer = GLBuffers.newDirectFloatBuffer(sphereVerticesArrayDOWN);
+//            int size = sphereVerticesDOWN.length * GLBuffers.SIZEOF_FLOAT;
+//            gl.glBufferData(GL4.GL_ARRAY_BUFFER, size, vertexBuffer, GL4.GL_STATIC_DRAW);
+//        }
+//
+//        gl.glGenBuffers(1, buffers, ELEMENTS_DOWN);
+//        gl.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, buffers[ELEMENTS_DOWN]);
+//        {
+//            IntBuffer elementBuffer = GLBuffers.newDirectIntBuffer(sphereElementsDOWN);
+//            int size = sphereElementsDOWN.length * GLBuffers.SIZEOF_FLOAT;
+//            gl.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, size, elementBuffer, GL4.GL_STATIC_DRAW);
+//        }
+//    }
+
+    private void initBezierControlPoints() {
+        controlPointsSphereUP4D = CP_SPHERE_UP_4D;
+        for(int i = 0; i < controlPointsSphereUP4D.length; i++) {
+            for(int j = 0; j < controlPointsSphereUP4D[i].length; j++) {
+                controlPointsSphereUP4D[i][j][0] *= R;
+                controlPointsSphereUP4D[i][j][1] *= R;
+                controlPointsSphereUP4D[i][j][2] *= R;
+            }
+        }
+
+        controlPointsSphereDOWN4D = CP_SPHERE_DOWN_4D;
+        for(int i = 0; i < controlPointsSphereDOWN4D.length; i++) {
+            for(int j = 0; j < controlPointsSphereDOWN4D[i].length; j++) {
+                controlPointsSphereDOWN4D[i][j][0] *= R;
+                controlPointsSphereDOWN4D[i][j][1] *= R;
+                controlPointsSphereDOWN4D[i][j][2] *= R;
+            }
+        }
+    }
 
 	private void initTextures(GLAutoDrawable drawable) {
 		uterusTexture = loadTexture(drawable, UTERUS_TEXTURE_PATH);
 		uterusBump = loadTexture(drawable, UTERUS_BUMP_PATH);
 	}
 
-	private void initBaby() {
+    private void initModel() {
+        InputStream objStream = MainWindow.class.getResourceAsStream(BABY_MODEL_OBJ_PATH);
+        IOBJParser objParser = new OBJParser();
+        try {
+            modelBaby = objParser.parse(objStream);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
-		InputStream objStream = MainWindow.class.getResourceAsStream(BABY_MODEL_OBJ_PATH);
-		IOBJParser objParser = new OBJParser();
-		try {
-			modelBaby = objParser.parse(objStream);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
+    private void initShaders(GLAutoDrawable drawable) {
+        GL2 gl = drawable.getGL().getGL2();
 
-	private void renderModel(GLAutoDrawable drawable, OBJModel model) {
-		GL2 gl = drawable.getGL().getGL2();
-
-		for (OBJObject object : model.getObjects()) {
-			for (OBJMesh mesh : object.getMeshes()) {
-				for (OBJFace face : mesh.getFaces()) {
-					gl.glBegin(GL2.GL_TRIANGLES);
-					for (OBJDataReference reference : face.getReferences()) {
-						final OBJVertex vertex = model.getVertex(reference);
-						if (reference.hasTexCoordIndex()) {
-							final OBJTexCoord texCoord = model.getTexCoord(reference);
-							gl.glTexCoord3f(texCoord.u, texCoord.v, texCoord.w);
-						}
-						if (reference.hasNormalIndex()) {
-							final OBJNormal normal = model.getNormal(reference);
-							gl.glNormal3f(normal.x, normal.y, normal.z);
-						} else {
-
-						}
-						gl.glVertex3f(vertex.x, vertex.y, vertex.z);
-					}
-					gl.glEnd();
-				}
-			}
-		}
-	}
-
-	private void initShaders(GLAutoDrawable drawable) {
-		GL2 gl = drawable.getGL().getGL2();
-
-		sphereShaderControl = initShaderProgram(drawable, SPHERE_SHADERS_PATH);
-		sphereLightPositionLocation = gl.glGetUniformLocation(sphereShaderControl.getShaderProgram(), LIGHT_POSITION);
-		sphereUterusTextureLocation = gl.glGetUniformLocation(sphereShaderControl.getShaderProgram(), UTERUS_TEXTURE);
-		sphereUterusBumpMapLocation = gl.glGetUniformLocation(sphereShaderControl.getShaderProgram(), UTERUS_BUMP_MAP);
+        sphereShaderControl = initShaderProgram(drawable, SPHERE_SHADERS_PATH);
+//        sphereAttributeVertexCoordLocation = gl.glGetAttribLocation(sphereShaderControl.getShaderProgram(),VERTEX_COORD );
+        sphereLightPositionLocation = gl.glGetUniformLocation(sphereShaderControl.getShaderProgram(), LIGHT_POSITION);
+        sphereUterusTextureLocation = gl.glGetUniformLocation(sphereShaderControl.getShaderProgram(), UTERUS_TEXTURE);
+        sphereUterusBumpMapLocation = gl.glGetUniformLocation(sphereShaderControl.getShaderProgram(), UTERUS_BUMP_MAP);
 
 		babyShaderControl = initShaderProgram(drawable, BABY_SHADERS_PATH);
 		babyLightPositionLocation = gl.glGetUniformLocation(babyShaderControl.getShaderProgram(), LIGHT_POSITION);
@@ -284,12 +352,41 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 		throw new RuntimeException("Error when loading texture " + path);
 	}
 
-	private void updateRotations(GLAutoDrawable drawable) {
-		GL2 gl = drawable.getGL().getGL2();
-		gl.glRotatef(angleX, 1, 0, 0);
-		gl.glRotatef(angleY, 0, 1, 0);
-		gl.glRotatef(angleZ, 0, 0, 1);
-	}
+    private void updateEye() {
+        glu.gluLookAt(eyePosition[0], eyePosition[1], eyePosition[2], eyePosition[0], eyePosition[1], 0, 0, 1, 0);
+    }
+
+    private void renderModel(GLAutoDrawable drawable, OBJModel model) {
+        GL2 gl = drawable.getGL().getGL2();
+
+        for (OBJObject object : model.getObjects()) {
+            for (OBJMesh mesh : object.getMeshes()) {
+                for (OBJFace face : mesh.getFaces()) {
+                    gl.glBegin(GL2.GL_TRIANGLES);
+                    for (OBJDataReference reference : face.getReferences()) {
+                        final OBJVertex vertex = model.getVertex(reference);
+                        if (reference.hasTexCoordIndex()) {
+                            final OBJTexCoord texCoord = model.getTexCoord(reference);
+                            gl.glTexCoord3f(texCoord.u, texCoord.v, texCoord.w);
+                        }
+                        if (reference.hasNormalIndex()) {
+                            final OBJNormal normal = model.getNormal(reference);
+                            gl.glNormal3f(normal.x, normal.y, normal.z);
+                        }
+                        gl.glVertex3f(vertex.x, vertex.y, vertex.z);
+                    }
+                    gl.glEnd();
+                }
+            }
+        }
+    }
+
+    private void updateRotations(GLAutoDrawable drawable) {
+        GL2 gl = drawable.getGL().getGL2();
+        gl.glRotatef(angleX, 1, 0, 0);
+        gl.glRotatef(angleY, 0, 1, 0);
+        gl.glRotatef(angleZ, 0, 0, 1);
+    }
 
 	private void updateTranslation(GLAutoDrawable drawable) {
 		GL2 gl = drawable.getGL().getGL2();
@@ -301,20 +398,65 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 		gl.glScalef(scaleX, scaleY, scaleZ);
 	}
 
-	private void drawSphere(GLAutoDrawable drawable, int radius, int slices, int stacks) {
+	private void computeRationalBezierSphere() {
+		sphereSurfaceUp = new RationalBezierSurface(controlPointsSphereUP4D, 3, NBR_SAMPLE_POINTS, NBR_SAMPLE_POINTS);
+		sphereSurfaceDown = new RationalBezierSurface(controlPointsSphereDOWN4D, 3, NBR_SAMPLE_POINTS, NBR_SAMPLE_POINTS);
+	}
+
+	private void renderRationalBezierSphere(GLAutoDrawable drawable) {
 		GL2 gl = drawable.getGL().getGL2();
 
+		float[][] sphereVertices = sphereSurfaceUp.getVertices();
+		float[][] sphereTextureCoord = sphereSurfaceUp.getTextureCoord();
+		int[] sphereElements = sphereSurfaceUp.getElements();
+
 		gl.glPushMatrix();
+		gl.glRotatef(90, 0, 1, 0);
+		gl.glBegin(GL.GL_TRIANGLES);
+		for(int i = 0; i < sphereElements.length - 2; i+=3) {
+			gl.glTexCoord2f(sphereTextureCoord[sphereElements[i]][0], sphereTextureCoord[sphereElements[i]][1]);
+			gl.glVertex3f(sphereVertices[sphereElements[i]][0], sphereVertices[sphereElements[i]][1], sphereVertices[sphereElements[i]][2]);
 
-		GLUquadric sphere = glu.gluNewQuadric();
-		glu.gluQuadricTexture(sphere, true);
-		glu.gluQuadricDrawStyle(sphere, GLU.GLU_FILL);
-		glu.gluQuadricNormals(sphere, GLU.GLU_FLAT);
-		glu.gluQuadricOrientation(sphere, GLU.GLU_OUTSIDE);
-		glu.gluSphere(sphere, radius, slices, stacks);
-		glu.gluDeleteQuadric(sphere);
+			gl.glTexCoord2f(sphereTextureCoord[sphereElements[i+1]][0], sphereTextureCoord[sphereElements[i+1]][1]);
+			gl.glVertex3f(sphereVertices[sphereElements[i+1]][0], sphereVertices[sphereElements[i+1]][1], sphereVertices[sphereElements[i+1]][2]);
 
+			gl.glTexCoord2f(sphereTextureCoord[sphereElements[i+2]][0], sphereTextureCoord[sphereElements[i+2]][1]);
+			gl.glVertex3f(sphereVertices[sphereElements[i+2]][0], sphereVertices[sphereElements[i+2]][1], sphereVertices[sphereElements[i+2]][2]);
+		}
+		gl.glEnd();
 		gl.glPopMatrix();
+
+		sphereVertices = sphereSurfaceDown.getVertices();
+		sphereTextureCoord = sphereSurfaceDown.getTextureCoord();
+		sphereElements = sphereSurfaceDown.getElements();
+
+		gl.glPushMatrix();
+		gl.glRotatef(90, 0, 1, 0);
+		gl.glBegin(GL.GL_TRIANGLES);
+		for(int i = 0; i < sphereElements.length - 2; i+=3) {
+			gl.glTexCoord2f(sphereTextureCoord[sphereElements[i]][0], sphereTextureCoord[sphereElements[i]][1]);
+			gl.glVertex3f(sphereVertices[sphereElements[i]][0], sphereVertices[sphereElements[i]][1], sphereVertices[sphereElements[i]][2]);
+
+			gl.glTexCoord2f(sphereTextureCoord[sphereElements[i+1]][0], sphereTextureCoord[sphereElements[i+1]][1]);
+			gl.glVertex3f(sphereVertices[sphereElements[i+1]][0], sphereVertices[sphereElements[i+1]][1], sphereVertices[sphereElements[i+1]][2]);
+
+			gl.glTexCoord2f(sphereTextureCoord[sphereElements[i+2]][0], sphereTextureCoord[sphereElements[i+2]][1]);
+			gl.glVertex3f(sphereVertices[sphereElements[i+2]][0], sphereVertices[sphereElements[i+2]][1], sphereVertices[sphereElements[i+2]][2]);
+		}
+		gl.glEnd();
+		gl.glPopMatrix();
+
+//        gl.glEnableVertexAttribArray(sphereAttributeVertexCoordLocation);
+//        gl.glBindBuffer(GL.GL_ARRAY_BUFFER, buffers[VERTICES_UP]);
+//        gl.glVertexAttribPointer(
+//                sphereAttributeVertexCoordLocation,
+//                3,
+//                GL.GL_FLOAT,
+//                false,
+//                0,
+//                null
+//        );
+//        gl.glDrawElements(GL.GL_TRIANGLE_STRIP, sphereElementsUP.length, GL.GL_UNSIGNED_INT, 0);
 	}
 
 	private void initInputMap() {
@@ -399,7 +541,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 			positionX = 0;
 			positionY = -babyShift;
 			positionZ = 0;
-			
+
 			eyePosition[2] = R;
 		}
 	}
@@ -411,7 +553,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 			int STEP_TIME = 10000000;
 			float END_BABY_POSITION = R;
 			int END_EYE_POSITION = R*4;
-			
+
 			int END_ANGLE_X = 270;
 			int END_ANGLE_Y = 0;
 			int END_ANGLE_Z = 180;
@@ -419,7 +561,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 			Instant first = Instant.now();
 			Instant second = Instant.now();
 			Duration duration = Duration.between(first, second);
-			
+
 			//move back view
 			while (eyePosition[2] != END_EYE_POSITION) {
 				first = Instant.now();
@@ -432,7 +574,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 				eyePosition[2] += 0.125;
 				display();
 			}
-			
+
 			//rotate the baby
 			while (angleX != END_ANGLE_X) {
 				first = Instant.now();
@@ -498,7 +640,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 					}				}
 				display();
 			}
-			
+
 			//put off the baby
 			while (positionY != END_BABY_POSITION) {
 				first = Instant.now();
