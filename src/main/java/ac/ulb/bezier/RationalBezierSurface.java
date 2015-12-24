@@ -1,5 +1,7 @@
 package ac.ulb.bezier;
 
+import ac.ulb.utils.MathUtil;
+
 public class RationalBezierSurface extends Surface {
 
     public RationalBezierSurface(float[][][] controlPoints, int order, int resolutionU, int resolutionV) {
@@ -20,7 +22,7 @@ public class RationalBezierSurface extends Surface {
                 weightCoeff += polyI * polyJ * controlPoints[i][j][3];
             }
         }
-        for(int k = 0; k < 3; k++) {
+        for (int k = 0; k < 3; k++) {
             result[k] = result[k] / weightCoeff;
         }
         return result;

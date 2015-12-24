@@ -3,6 +3,7 @@ package ac.ulb.baby;
 import ac.ulb.enums.*;
 import ac.ulb.bezier.RationalBezierSurface;
 import ac.ulb.utils.Const;
+import ac.ulb.utils.MathUtil;
 import ac.ulb.utils.ShaderControl;
 import com.jogamp.opengl.*;
 import com.jogamp.opengl.awt.GLJPanel;
@@ -19,8 +20,6 @@ import java.awt.event.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.FloatBuffer;
-import java.time.Duration;
-import java.time.Instant;
 
 public class MainRenderer extends GLJPanel implements GLEventListener {
 
@@ -41,20 +40,15 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     private int babyUterusTextureLocation;
     private ShaderControl babyShaderControl;
 
-    private float babyShift = (float) 4.5;
-
+    private float babyShift = 4.5f;
     private float[] babyAngle = new float[]{0, 0, 0};
-
     private float[] babyPosition = new float[]{0, -babyShift, 0};
-
-    private float scaleX = (float) 1.1;
-    private float scaleY = (float) 1.1;
-    private float scaleZ = (float) 1.1;
 
     // Eye
     private float[] eyePosition = new float[]{0, 0, Const.Sphere.R};
 
     // Bezier
+    private boolean computeBezier = true;
 
     private float[][][] controlPointsSphereUP4D;
     private float[][][] controlPointsSphereDOWN4D;
@@ -62,11 +56,17 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     private RationalBezierSurface sphereSurfaceUp;
     private RationalBezierSurface sphereSurfaceDown;
 
+    // Actions
+    private boolean actionAllowed = true;
+
     private boolean mouseFirstPressed = false;
     private boolean mouseSecondPressed = false;
 
     private float prevMouseX;
     private float prevMouseY;
+
+    private boolean animation = false;
+    private AnimationStep animationStep = Const.Anim.FIRST_STEP;
 
     public MainRenderer() {
         this.addGLEventListener(this);
@@ -99,7 +99,6 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         initPerspective(drawable);
 
         initBezierControlPoints();
-        computeRationalBezierSphere();
         initShaders(drawable);
         initTextures(drawable);
         initModel();
@@ -120,8 +119,12 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         gl.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT);
         gl.glLoadIdentity();
 
+        manageAnimation();
+
+        // View
         updateEye();
 
+        // Uterus
         sphereShaderControl.useShaderProgram(gl);
         gl.glUniform3fv(sphereLightPositionLocation, Const.Light.NUM_LIGHTS, FloatBuffer.wrap(Const.Light.LIGHTS_POSITIONS));
         gl.glUniform1i(sphereUterusTextureLocation, 0);
@@ -129,12 +132,14 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         gl.glActiveTexture(GL.GL_TEXTURE0);
         uterusTexture.bind(gl);
-
         gl.glActiveTexture(GL.GL_TEXTURE1);
         uterusBump.bind(gl);
 
-        renderRationalBezierSphere(drawable);
+        renderSphere(drawable);
 
+        sphereShaderControl.stopUsingShaderProgram(gl);
+
+        // Baby
         babyShaderControl.useShaderProgram(gl);
         gl.glUniform3fv(babyLightPositionLocation, Const.Light.NUM_LIGHTS, FloatBuffer.wrap(Const.Light.LIGHTS_POSITIONS));
         gl.glUniform1i(babyUterusTextureLocation, 0);
@@ -142,12 +147,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         gl.glActiveTexture(GL.GL_TEXTURE0);
         uterusTexture.bind(gl);
 
-        gl.glPushMatrix();
-        updateRotations(drawable);
-        updateTranslation(drawable);
-        updateScale(drawable);
-        renderModel(drawable, modelBaby);
-        gl.glPopMatrix();
+        renderBaby(drawable);
 
         babyShaderControl.stopUsingShaderProgram(gl);
     }
@@ -190,6 +190,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
                 controlPointsSphereDOWN4D[i][j][2] *= Const.Sphere.R;
             }
         }
+        computeBezier = true;
     }
 
     private void initTextures(GLAutoDrawable drawable) {
@@ -250,6 +251,14 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         glu.gluLookAt(eyePosition[0], eyePosition[1], eyePosition[2], eyePosition[0], eyePosition[1], 0, 0, 1, 0);
     }
 
+    private void renderBaby(GLAutoDrawable drawable) {
+        GL2 gl = drawable.getGL().getGL2();
+        gl.glPushMatrix();
+        updateBabyGeometry(drawable);
+        renderModel(drawable, modelBaby);
+        gl.glPopMatrix();
+    }
+
     private void renderModel(GLAutoDrawable drawable, OBJModel model) {
         GL2 gl = drawable.getGL().getGL2();
 
@@ -275,33 +284,32 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         }
     }
 
-    private void updateRotations(GLAutoDrawable drawable) {
+    private void updateBabyGeometry(GLAutoDrawable drawable) {
         GL2 gl = drawable.getGL().getGL2();
+        gl.glScalef(Const.Baby.SCALE[0], Const.Baby.SCALE[1], Const.Baby.SCALE[2]);
+
         gl.glRotatef(babyAngle[0], 1, 0, 0);
         gl.glRotatef(babyAngle[1], 0, 1, 0);
         gl.glRotatef(babyAngle[2], 0, 0, 1);
 //        System.out.println("angleX : " + babyAngle[0]);
 //        System.out.println("angleY : " + babyAngle[1]);
 //        System.out.println("angleZ : " + babyAngle[2]);
-    }
 
-    private void updateTranslation(GLAutoDrawable drawable) {
-        GL2 gl = drawable.getGL().getGL2();
         gl.glTranslatef(babyPosition[0], babyPosition[1], babyPosition[2]);
     }
 
-    private void updateScale(GLAutoDrawable drawable) {
-        GL2 gl = drawable.getGL().getGL2();
-        gl.glScalef(scaleX, scaleY, scaleZ);
-    }
-
     private void computeRationalBezierSphere() {
-        sphereSurfaceUp = new RationalBezierSurface(controlPointsSphereUP4D, 3, Const.Sphere.NBR_SAMPLE_POINTS, Const.Sphere.NBR_SAMPLE_POINTS);
-        sphereSurfaceDown = new RationalBezierSurface(controlPointsSphereDOWN4D, 3, Const.Sphere.NBR_SAMPLE_POINTS, Const.Sphere.NBR_SAMPLE_POINTS);
+        if (computeBezier) {
+            sphereSurfaceUp = new RationalBezierSurface(controlPointsSphereUP4D, 3, Const.Sphere.NBR_SAMPLE_POINTS, Const.Sphere.NBR_SAMPLE_POINTS);
+            sphereSurfaceDown = new RationalBezierSurface(controlPointsSphereDOWN4D, 3, Const.Sphere.NBR_SAMPLE_POINTS, Const.Sphere.NBR_SAMPLE_POINTS);
+            computeBezier = false;
+        }
     }
 
-    private void renderRationalBezierSphere(GLAutoDrawable drawable) {
+    private void renderSphere(GLAutoDrawable drawable) {
         GL2 gl = drawable.getGL().getGL2();
+
+        computeRationalBezierSphere();
 
         float[][] sphereVertices = sphereSurfaceUp.getVertices();
         float[][] sphereTextureCoord = sphereSurfaceUp.getTextureCoord();
@@ -342,6 +350,83 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         }
         gl.glEnd();
         gl.glPopMatrix();
+    }
+
+    private void manageAnimation() {
+        if (!animation) {
+            return;
+        }
+        switch (animationStep) {
+            case MOVE_VIEW:
+                translate(eyePosition, Const.Anim.EYE_END_POSITION, Const.Anim.EYE_MAX_STEP);
+                break;
+            case OPEN_UTERUS:
+                openUterus(Const.Anim.UTERUS_MAX_OPENING, Const.Anim.UTERUS_STEP_OPENING);
+                break;
+            case ROTATE_BABY_OUT:
+                rotate(babyAngle, Const.Anim.BABY_OUT_ANGLE, Const.Anim.BABY_ANGLE_MAX_STEP);
+                break;
+            case TRANSLATE_BABY:
+                translate(babyPosition, Const.Anim.BABY_END_POSITION, Const.Anim.BABY_MAX_STEP);
+                break;
+            case END:
+                animation = false;
+                break;
+        }
+    }
+
+    private void openUterus(float maxOpening, float stepOpening) {
+        if (controlPointsSphereUP4D[1][3][1] < (maxOpening * Const.Sphere.R)) {
+            controlPointsSphereUP4D[1][3][1] += (stepOpening * Const.Sphere.R);
+            controlPointsSphereUP4D[2][3][1] += (stepOpening * Const.Sphere.R);
+            controlPointsSphereDOWN4D[1][3][1] -= (stepOpening * Const.Sphere.R);
+            controlPointsSphereDOWN4D[2][3][1] -= (stepOpening * Const.Sphere.R);
+            computeBezier = true;
+        } else {
+            animationStep = animationStep.next();
+        }
+    }
+
+    private void rotate(float[] currentAngle, float[] newAngle, float[] maxStep) {
+        boolean[] finished = {false, false, false};
+        for (int i = 0; i < 3; i++) {
+            float diff = MathUtil.diffAngle(newAngle[i], currentAngle[i]);
+            if (diff != 0) {
+                if (diff > maxStep[i]) {
+                    diff = maxStep[i];
+                }
+                if (diff < -maxStep[i]) {
+                    diff = -maxStep[i];
+                }
+                currentAngle[i] += diff;
+            } else {
+                finished[i] = true;
+            }
+        }
+        if (finished[0] && finished[1] && finished[2]) {
+            animationStep = animationStep.next();
+        }
+    }
+
+    private void translate(float[] currentPosition, float[] newPosition, float[] maxStep) {
+        boolean[] finished = {false, false, false};
+        for (int i = 0; i < 3; i++) {
+            if (currentPosition[i] != newPosition[i]) {
+                float diff = newPosition[i] - currentPosition[i];
+                if (diff > maxStep[i]) {
+                    diff = maxStep[i];
+                }
+                if (diff < -maxStep[i]) {
+                    diff = -maxStep[i];
+                }
+                currentPosition[i] += diff;
+            } else {
+                finished[i] = true;
+            }
+        }
+        if (finished[0] && finished[1] && finished[2]) {
+            animationStep = animationStep.next();
+        }
     }
 
     private void initInputMap() {
@@ -420,129 +505,20 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             babyAngle = new float[]{0, 0, 0};
-
             babyPosition = new float[]{0, -babyShift, 0};
-
             eyePosition = new float[]{0, 0, Const.Sphere.R};
+            animationStep = Const.Anim.FIRST_STEP;
+            animation = false;
+            actionAllowed = true;
+            initBezierControlPoints();
         }
     }
 
     private class ActionStartAnimation extends AbstractAction {
 
-        private void openUterus(float maxOpening, float stepOpening, int stepTime) {
-            Instant first;
-            Instant second;
-            Duration duration;
-            while (controlPointsSphereUP4D[1][3][1] < (maxOpening * Const.Sphere.R)) {
-                first = Instant.now();
-                second = Instant.now();
-                duration = Duration.between(first, second);
-                while (duration.getNano() < stepTime) {
-                    second = Instant.now();
-                    duration = Duration.between(first, second);
-                }
-                controlPointsSphereUP4D[1][3][1] += (stepOpening * Const.Sphere.R);
-                controlPointsSphereUP4D[2][3][1] += (stepOpening * Const.Sphere.R);
-                controlPointsSphereDOWN4D[1][3][1] -= (stepOpening * Const.Sphere.R);
-                controlPointsSphereDOWN4D[2][3][1] -= (stepOpening * Const.Sphere.R);
-                computeRationalBezierSphere();
-                display();
-            }
-
-        }
-
-        private void rotateBaby(float[] newAngle, int stepTime) {
-            Instant first;
-            Instant second;
-            Duration duration;
-            for (int i = 0; i < 3; i++) {
-                while (babyAngle[i] != newAngle[i]) {
-                    first = Instant.now();
-                    second = Instant.now();
-                    duration = Duration.between(first, second);
-                    while (duration.getNano() < stepTime) {
-                        second = Instant.now();
-                        duration = Duration.between(first, second);
-                    }
-                    float inf = newAngle[i] - 180;
-                    float sup = newAngle[i];
-                    if (inf < 0) {
-                        sup = inf + 360;
-                        inf = newAngle[i];
-                    }
-
-                    if (inf < babyAngle[i] & babyAngle[i] < sup) {
-                        babyAngle[i] += 1;
-                        if (babyAngle[i] >= 360) {
-                            babyAngle[i] -= 360;
-                        }
-                    } else {
-                        babyAngle[i] -= 1;
-                        if (babyAngle[i] < 0) {
-                            babyAngle[i] += 360;
-                        }
-                    }
-                    display();
-                }
-            }
-        }
-
-        private void translateBaby(float[] newPosition, int stepTime) {
-            Instant first;
-            Instant second;
-            Duration duration;
-            for (int i = 0; i < 3; i++) {
-                while (babyPosition[i] != newPosition[i]) {
-                    first = Instant.now();
-                    second = Instant.now();
-                    duration = Duration.between(first, second);
-                    while (duration.getNano() < stepTime) {
-                        second = Instant.now();
-                        duration = Duration.between(first, second);
-                    }
-                    babyPosition[i] += 0.125;
-                    display();
-                }
-            }
-        }
-
-        private void moveView(float[] newEyePosition, int stepTime) {
-            Instant first;
-            Instant second;
-            Duration duration;
-            for (int i = 0; i < 3; i++) {
-                while (eyePosition[i] != newEyePosition[i]) {
-                    first = Instant.now();
-                    second = Instant.now();
-                    duration = Duration.between(first, second);
-                    while (duration.getNano() < stepTime) {
-                        second = Instant.now();
-                        duration = Duration.between(first, second);
-                    }
-                    eyePosition[i] += 0.125;
-                    display();
-                }
-            }
-        }
-
         @Override
         public void actionPerformed(ActionEvent e) {
-
-
-            //move back view
-            moveView(Const.Anim.END_EYE_POSITION, Const.Anim.STEP_TIME);
-
-            //cut in the uterus
-            openUterus(Const.Anim.MAX_OPENING, Const.Anim.STEP_OPENING, Const.Anim.STEP_TIME);
-
-            //head of baby in direction of sphere opening
-            rotateBaby(Const.Anim.OUT_ANGLE, Const.Anim.STEP_TIME);
-
-            //put off the baby
-            translateBaby(Const.Anim.END_POSITION, Const.Anim.STEP_TIME);
-
-            //baby in initial position
-            //rotateBaby(END_ANGLE, STEP_TIME); // je dois v�rifier les conditions sur le changement des angles
+            animation = true;
         }
     }
 

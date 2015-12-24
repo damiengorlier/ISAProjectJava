@@ -36,7 +36,7 @@ public abstract class Surface {
             for (int rv = 0; rv < resolutionV; rv++) {
                 float v = (float) rv / (resolutionV - 1);
                 vertices[(ru * resolutionV) + rv] = computePosition(controlPoints, u, v);
-                textureCoord[(ru * resolutionV) + rv] = new float[] {u, v};
+                textureCoord[(ru * resolutionV) + rv] = new float[]{u, v};
             }
         }
         int k = 0;
@@ -78,12 +78,12 @@ public abstract class Surface {
     public float[] getVerticesAsArray() {
         float[] array = new float[vertices.length * 3];
         int k = 0;
-        for (int i = 0; i < vertices.length; i++) {
-            array[k] = vertices[i][0];
+        for (float[] vertex : vertices) {
+            array[k] = vertex[0];
             k++;
-            array[k] = vertices[i][1];
+            array[k] = vertex[1];
             k++;
-            array[k] = vertices[i][2];
+            array[k] = vertex[2];
         }
         return array;
     }

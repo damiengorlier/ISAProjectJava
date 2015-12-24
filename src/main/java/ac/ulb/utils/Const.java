@@ -1,5 +1,7 @@
 package ac.ulb.utils;
 
+import ac.ulb.enums.AnimationStep;
+
 public class Const {
 
     public static class Path {
@@ -43,10 +45,14 @@ public class Const {
         public static final int NBR_SAMPLE_POINTS = 20;
     }
 
+    public static class Baby {
+        public static final float[] SCALE = {1.1f, 1.1f, 1.1f};
+    }
+
     public static class Light {
         public static final int NUM_LIGHTS = 6;
         public static final int R_LIGHT = 3 * Sphere.R / 4;
-        public static final float[] POS_X = {1, (float) -0.5};
+        public static final float[] POS_X = {1, -0.5f};
         public static final float[] POS_Y = {(float) Math.sin(Math.PI / 4), (float) -Math.sin(Math.PI / 4)};
         public static final float[] POS_Z = {0, (float) Math.sin(2 * Math.PI / 3), (float) -Math.sin(2 * Math.PI / 3)};
 
@@ -61,13 +67,16 @@ public class Const {
     }
 
     public static class Anim {
-        public static final int STEP_TIME = 10000000;
-        public static final float[] END_EYE_POSITION = {0, 0, Const.Sphere.R * 4};
-        public static final float[] OUT_ANGLE = {270, 0, 180};
-        public static final float[] END_ANGLE = {0, 0, 0};
-        public static final float[] END_POSITION = {0, Const.Sphere.R, 0};
-        public static final float MAX_OPENING = 0.75f;
-        public static final float STEP_OPENING = 0.01f;
+        public static final AnimationStep FIRST_STEP = AnimationStep.MOVE_VIEW;
+        public static final float[] EYE_MAX_STEP = {1, 1, 1};
+        public static final float[] EYE_END_POSITION = {0, 0, Const.Sphere.R * 4};
+        public static final float[] BABY_MAX_STEP = {1, 1, 1};
+        public static final float[] BABY_ANGLE_MAX_STEP = {2, 2, 2};
+        public static final float[] BABY_OUT_ANGLE = {270, 0, 180};
+        public static final float[] BABY_END_ANGLE = {0, 0, 0};
+        public static final float[] BABY_END_POSITION = {0, Const.Sphere.R, 0};
+        public static final float UTERUS_MAX_OPENING = 0.75f;
+        public static final float UTERUS_STEP_OPENING = 0.01f;
     }
 
 }

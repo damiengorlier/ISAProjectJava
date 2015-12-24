@@ -1,6 +1,8 @@
 package ac.ulb.bezier;
 
-public class BezierSurface extends Surface{
+import ac.ulb.utils.MathUtil;
+
+public class BezierSurface extends Surface {
 
     public BezierSurface(float[][][] controlPoints, int order, int resolutionU, int resolutionV) {
         super(controlPoints, order, resolutionU, resolutionV);
