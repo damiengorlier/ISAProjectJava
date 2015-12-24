@@ -526,6 +526,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if(animation) return;
             babyAngle[0] -= 5;
             if (babyAngle[0] < 0) {
                 babyAngle[0] += 360;
@@ -537,6 +538,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if(animation) return;
             babyAngle[0] += 5;
             if (babyAngle[0] > 360) {
                 babyAngle[0] -= 360;
@@ -548,6 +550,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if(animation) return;
             babyAngle[1] -= 5;
             if (babyAngle[1] < 0) {
                 babyAngle[1] += 360;
@@ -559,6 +562,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if(animation) return;
             babyAngle[1] += 5;
             if (babyAngle[1] > 360) {
                 babyAngle[1] -= 360;
@@ -570,6 +574,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if(animation) return;
             babyAngle[2] -= 5;
             if (babyAngle[2] < 0) {
                 babyAngle[2] += 360;
@@ -581,6 +586,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if(animation) return;
             babyAngle[2] += 5;
             if (babyAngle[2] > 360) {
                 babyAngle[2] -= 360;
@@ -592,6 +598,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if(animation) return;
             eyePosition[0] -= 1;
         }
     }
@@ -600,6 +607,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if(animation) return;
             eyePosition[0] += 1;
         }
     }
@@ -608,6 +616,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if(animation) return;
             eyePosition[1] -= 1;
         }
     }
@@ -616,6 +625,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if(animation) return;
             eyePosition[1] += 1;
         }
     }
@@ -624,6 +634,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if(animation) return;
             eyePosition[2] -= 1;
         }
     }
@@ -632,6 +643,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void actionPerformed(ActionEvent e) {
+            if(animation) return;
             eyePosition[2] += 1;
         }
     }
@@ -640,6 +652,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void mousePressed(final MouseEvent e) {
+            if(animation) return;
             if (SwingUtilities.isLeftMouseButton(e)) {
                 mouseFirstPressed = true;
             }
@@ -650,6 +663,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void mouseReleased(final MouseEvent e) {
+            if(animation) return;
             if (SwingUtilities.isLeftMouseButton(e)) {
                 mouseFirstPressed = false;
             }
@@ -660,12 +674,14 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void mouseMoved(final MouseEvent e) {
+            if(animation) return;
             prevMouseX = e.getX();
             prevMouseY = e.getY();
         }
 
         @Override
         public void mouseDragged(final MouseEvent e) {
+            if(animation) return;
             float x = e.getX();
             float y = e.getY();
             if (mouseFirstPressed) {
@@ -683,6 +699,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
         @Override
         public void mouseWheelMoved(final MouseWheelEvent e) {
+            if(animation) return;
             eyePosition[2] += e.getWheelRotation() * 5;
         }
     }
