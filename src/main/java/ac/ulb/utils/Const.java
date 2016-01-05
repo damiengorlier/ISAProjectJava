@@ -27,6 +27,11 @@ public class Const {
         public static final String UTERUS_BUMP_MAP = "uterusBumpMap";
     }
 
+    public static class Attrib {
+        public static final int ATTR_TANGENT_LOCATION = 3;
+        public static final String ATTR_TANGENT = "attrTangent";
+    }
+
     public static class Sphere {
         public static final int R = 8;
 

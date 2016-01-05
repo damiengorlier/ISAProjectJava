@@ -18,6 +18,7 @@ public class ShaderControl {
 
     public void init(GL2 gl) {
         try {
+            shaderProgram = gl.glCreateProgram();
             attachShaders(gl);
         } catch (Exception e) {
             e.printStackTrace();
@@ -49,10 +50,12 @@ public class ShaderControl {
         gl.glCompileShader(vertexShaderProgram);
         gl.glShaderSource(fragmentShaderProgram, 1, fsrc, null, 0);
         gl.glCompileShader(fragmentShaderProgram);
-        shaderProgram = gl.glCreateProgram();
 
         gl.glAttachShader(shaderProgram, vertexShaderProgram);
         gl.glAttachShader(shaderProgram, fragmentShaderProgram);
+    }
+
+    public void linkProgram(GL2 gl) {
         gl.glLinkProgram(shaderProgram);
         gl.glValidateProgram(shaderProgram);
         IntBuffer intBuffer = IntBuffer.allocate(1);

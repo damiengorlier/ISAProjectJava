@@ -4,6 +4,8 @@
 
 #version 130
 
+attribute vec3 attrTangent;
+
 varying vec3 vPositionES;
 varying vec3 vPosition;
 varying vec2 vTexCoord;

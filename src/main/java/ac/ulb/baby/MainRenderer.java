@@ -212,11 +212,15 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         GL2 gl = drawable.getGL().getGL2();
 
         sphereShaderControl = initShaderProgram(drawable, Const.Path.SPHERE_SHADERS_PATH);
+        gl.glBindAttribLocation(sphereShaderControl.getShaderProgram(), Const.Attrib.ATTR_TANGENT_LOCATION, Const.Attrib.ATTR_TANGENT);
+        sphereShaderControl.linkProgram(gl);
         sphereLightPositionLocation = gl.glGetUniformLocation(sphereShaderControl.getShaderProgram(), Const.Uniform.LIGHT_POSITION);
         sphereUterusTextureLocation = gl.glGetUniformLocation(sphereShaderControl.getShaderProgram(), Const.Uniform.UTERUS_TEXTURE);
         sphereUterusBumpMapLocation = gl.glGetUniformLocation(sphereShaderControl.getShaderProgram(), Const.Uniform.UTERUS_BUMP_MAP);
 
+
         babyShaderControl = initShaderProgram(drawable, Const.Path.BABY_SHADERS_PATH);
+        babyShaderControl.linkProgram(gl);
         babyLightPositionLocation = gl.glGetUniformLocation(babyShaderControl.getShaderProgram(), Const.Uniform.LIGHT_POSITION);
         babyUterusTextureLocation = gl.glGetUniformLocation(babyShaderControl.getShaderProgram(), Const.Uniform.UTERUS_TEXTURE);
     }
@@ -291,9 +295,6 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         gl.glRotatef(babyAngle[0], 1, 0, 0);
         gl.glRotatef(babyAngle[1], 0, 1, 0);
         gl.glRotatef(babyAngle[2], 0, 0, 1);
-//        System.out.println("angleX : " + babyAngle[0]);
-//        System.out.println("angleY : " + babyAngle[1]);
-//        System.out.println("angleZ : " + babyAngle[2]);
 
         gl.glTranslatef(babyPosition[0], babyPosition[1], babyPosition[2]);
     }
@@ -312,6 +313,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         computeRationalBezierSphere();
 
         float[][] sphereVertices = sphereSurfaceUp.getVertices();
+        float[][] sphereTangents = sphereSurfaceUp.getTangents();
         float[][] sphereTextureCoord = sphereSurfaceUp.getTextureCoord();
         int[] sphereElements = sphereSurfaceUp.getElements();
 
@@ -320,12 +322,15 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         gl.glBegin(GL.GL_TRIANGLES);
         for (int i = 0; i < sphereElements.length - 2; i += 3) {
             gl.glTexCoord2f(sphereTextureCoord[sphereElements[i]][0], sphereTextureCoord[sphereElements[i]][1]);
+            gl.glVertexAttrib3f(Const.Attrib.ATTR_TANGENT_LOCATION, sphereTangents[sphereElements[i]][0], sphereTangents[sphereElements[i]][1], sphereTangents[sphereElements[i]][2]);
             gl.glVertex3f(sphereVertices[sphereElements[i]][0], sphereVertices[sphereElements[i]][1], sphereVertices[sphereElements[i]][2]);
 
             gl.glTexCoord2f(sphereTextureCoord[sphereElements[i + 1]][0], sphereTextureCoord[sphereElements[i + 1]][1]);
+            gl.glVertexAttrib3f(Const.Attrib.ATTR_TANGENT_LOCATION, sphereTangents[sphereElements[i + 1]][0], sphereTangents[sphereElements[i + 1]][1], sphereTangents[sphereElements[i + 1]][2]);
             gl.glVertex3f(sphereVertices[sphereElements[i + 1]][0], sphereVertices[sphereElements[i + 1]][1], sphereVertices[sphereElements[i + 1]][2]);
 
             gl.glTexCoord2f(sphereTextureCoord[sphereElements[i + 2]][0], sphereTextureCoord[sphereElements[i + 2]][1]);
+            gl.glVertexAttrib3f(Const.Attrib.ATTR_TANGENT_LOCATION, sphereTangents[sphereElements[i + 2]][0], sphereTangents[sphereElements[i + 2]][1], sphereTangents[sphereElements[i + 2]][2]);
             gl.glVertex3f(sphereVertices[sphereElements[i + 2]][0], sphereVertices[sphereElements[i + 2]][1], sphereVertices[sphereElements[i + 2]][2]);
         }
         gl.glEnd();
