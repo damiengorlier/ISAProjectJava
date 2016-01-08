@@ -9,7 +9,12 @@ import java.awt.event.WindowEvent;
 
 public class MainWindow extends JFrame {
 
-    private static final String WINDOW_TITLE = "Baby Project";
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -5691073273359569941L;
+	
+	private static final String WINDOW_TITLE = "Baby Project";
     private static final Dimension WINDOW_SIZE = new Dimension(1024, 768);
     private static final int FPS = 60;
 

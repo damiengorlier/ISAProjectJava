@@ -1,7 +1,6 @@
 package ac.ulb.enums;
 
 public enum KeyEnum {
-	SPACE_BAR("SPACE"),
     LOWER_A("A"),
     UPPER_A("shift A"),
     LOWER_D("D"),

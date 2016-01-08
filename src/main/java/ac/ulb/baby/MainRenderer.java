@@ -23,7 +23,11 @@ import java.nio.FloatBuffer;
 
 public class MainRenderer extends GLJPanel implements GLEventListener {
 
-    // Outils & Containers
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 8443847388978895476L;
+	// Outils & Containers
     private GLU glu;
     private Texture uterusTexture;
     private Texture uterusBump;
@@ -57,7 +61,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     private RationalBezierSurface sphereSurfaceDown;
 
     // Actions
-    private boolean actionAllowed = true;
+    //private boolean actionAllowed = true;
 
     private boolean mouseFirstPressed = false;
     private boolean mouseSecondPressed = false;
@@ -239,7 +243,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     }
 
     private Texture loadTexture(GLAutoDrawable drawable, String path) {
-        System.out.println("loadTexture : " + path);
+        //System.out.println("loadTexture : " + path);
         GL2 gl = drawable.getGL().getGL2();
         try {
             InputStream stream = MainWindow.class.getResourceAsStream(path);
@@ -435,10 +439,6 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     }
 
     private void initInputMap() {
-        // Reset
-        // space bar
-        this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.SPACE_BAR.key()), ActionEnum.RESET.action());
-
         // Animation
         // Aa
         this.getInputMap().put(KeyStroke.getKeyStroke(KeyEnum.LOWER_A.key()), ActionEnum.START_ANIMATION.action());
@@ -482,9 +482,6 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
     }
 
     private void initActionMap() {
-        // Reset
-        this.getActionMap().put(ActionEnum.RESET.action(), new ActionReset());
-
         // Animation
         this.getActionMap().put(ActionEnum.START_ANIMATION.action(), new ActionStartAnimation());
 
@@ -505,23 +502,14 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
         this.getActionMap().put(ActionEnum.PLUS_DIST_Z.action(), new ActionPlusEyeZ());
     }
 
-    private class ActionReset extends AbstractAction {
-
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            babyAngle = new float[]{0, 0, 0};
-            babyPosition = new float[]{0, -babyShift, 0};
-            eyePosition = new float[]{0, 0, Const.Sphere.R};
-            animationStep = Const.Anim.FIRST_STEP;
-            animation = false;
-            actionAllowed = true;
-            initBezierControlPoints();
-        }
-    }
-
     private class ActionStartAnimation extends AbstractAction {
 
-        @Override
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -354019436736980750L;
+
+		@Override
         public void actionPerformed(ActionEvent e) {
             animation = true;
         }
@@ -529,7 +517,12 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private class ActionLessAngleX extends AbstractAction {
 
-        @Override
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 3294047342248235008L;
+
+		@Override
         public void actionPerformed(ActionEvent e) {
             if(animation) return;
             babyAngle[0] -= 5;
@@ -541,7 +534,12 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private class ActionPlusAngleX extends AbstractAction {
 
-        @Override
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -2499921987077721087L;
+
+		@Override
         public void actionPerformed(ActionEvent e) {
             if(animation) return;
             babyAngle[0] += 5;
@@ -553,7 +551,12 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private class ActionLessAngleY extends AbstractAction {
 
-        @Override
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 8309233735369022564L;
+
+		@Override
         public void actionPerformed(ActionEvent e) {
             if(animation) return;
             babyAngle[1] -= 5;
@@ -565,7 +568,12 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private class ActionPlusAngleY extends AbstractAction {
 
-        @Override
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 5098708437418690435L;
+
+		@Override
         public void actionPerformed(ActionEvent e) {
             if(animation) return;
             babyAngle[1] += 5;
@@ -577,7 +585,12 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private class ActionLessAngleZ extends AbstractAction {
 
-        @Override
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 4062862260166480331L;
+
+		@Override
         public void actionPerformed(ActionEvent e) {
             if(animation) return;
             babyAngle[2] -= 5;
@@ -589,7 +602,12 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private class ActionPlusAngleZ extends AbstractAction {
 
-        @Override
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 4409692529566539583L;
+
+		@Override
         public void actionPerformed(ActionEvent e) {
             if(animation) return;
             babyAngle[2] += 5;
@@ -601,7 +619,12 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private class ActionLessEyeX extends AbstractAction {
 
-        @Override
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -711825904656924758L;
+
+		@Override
         public void actionPerformed(ActionEvent e) {
             if(animation) return;
             eyePosition[0] -= 1;
@@ -610,7 +633,12 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private class ActionPlusEyeX extends AbstractAction {
 
-        @Override
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -305703779048755283L;
+
+		@Override
         public void actionPerformed(ActionEvent e) {
             if(animation) return;
             eyePosition[0] += 1;
@@ -619,7 +647,12 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private class ActionLessEyeY extends AbstractAction {
 
-        @Override
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 555938576940049691L;
+
+		@Override
         public void actionPerformed(ActionEvent e) {
             if(animation) return;
             eyePosition[1] -= 1;
@@ -628,7 +661,12 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private class ActionPlusEyeY extends AbstractAction {
 
-        @Override
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = -4309837865083032875L;
+
+		@Override
         public void actionPerformed(ActionEvent e) {
             if(animation) return;
             eyePosition[1] += 1;
@@ -637,7 +675,12 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private class ActionLessEyeZ extends AbstractAction {
 
-        @Override
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 5765332598910126800L;
+
+		@Override
         public void actionPerformed(ActionEvent e) {
             if(animation) return;
             eyePosition[2] -= 1;
@@ -646,7 +689,12 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private class ActionPlusEyeZ extends AbstractAction {
 
-        @Override
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 4663064995435527376L;
+
+		@Override
         public void actionPerformed(ActionEvent e) {
             if(animation) return;
             eyePosition[2] += 1;

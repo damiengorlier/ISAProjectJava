@@ -1,5 +1,5 @@
 /*
- * Fragment shader.
+ * Fragment shader of the sphere.
  */
 
 #version 130
