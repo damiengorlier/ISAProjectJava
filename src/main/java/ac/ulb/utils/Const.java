@@ -8,6 +8,7 @@ public class Const {
         public static final String TEXTURES_ROOT = "/textures";
         public static final String UTERUS_TEXTURE_PATH = TEXTURES_ROOT + "/" + "uterus_text.png";
         public static final String UTERUS_BUMP_PATH = TEXTURES_ROOT + "/" + "uterus_bump.png";
+        public static final String UTERUS_NORMAL_PATH = TEXTURES_ROOT + "/" + "uterus_normal.png";
 
         public static final String MODEL_ROOT = "/model";
         public static final String BABY_MODEL_OBJ_PATH = MODEL_ROOT + "/baby_original_triangles.obj";

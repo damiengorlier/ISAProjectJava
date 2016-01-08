@@ -195,7 +195,7 @@ public class MainRenderer extends GLJPanel implements GLEventListener {
 
     private void initTextures(GLAutoDrawable drawable) {
         uterusTexture = loadTexture(drawable, Const.Path.UTERUS_TEXTURE_PATH);
-        uterusBump = loadTexture(drawable, Const.Path.UTERUS_BUMP_PATH);
+        uterusBump = loadTexture(drawable, Const.Path.UTERUS_NORMAL_PATH);
     }
 
     private void initModel() {
