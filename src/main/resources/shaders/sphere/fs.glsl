@@ -8,7 +8,7 @@ const int NUM_LIGHTS = 6;
 const vec3 LIGHT_COLOR = vec3(1.0, 1.0, 1.0);
 const vec3 SPECULAR_COLOR = vec3(0.9, 0.9, 0.9);
 const float SHININESS_COEFF = 200.0;
-const float LIGHT_RADIUS = 15;
+const float LIGHT_RADIUS = 7;
 const float AMBIENT_COEFF = 0.1;
 
 // Attenuation factors : 1 / (Kc + Kl * dist + Kq * dist²)

@@ -28,7 +28,8 @@ varying vec3 vertexLightPositionMV[NUM_LIGHTS];
 float distanceAttenuation(vec3 lightVector);
 float halfLambert(vec3 vect1, vec3 vect2);
 
-vec4 BASE_COLOR = vec4(100.0/255.0, 75.0/255.0, 25.0/255.0, 1.0);
+//vec4 BASE_COLOR = vec4(100.0/255.0, 75.0/255.0, 25.0/255.0, 1.0);
+vec4 BASE_COLOR = vec4(255.0/255.0, 223.0/255.0, 128.0/255.0, 1.0);
 
 void main()
 {
@@ -42,22 +43,17 @@ void main()
     vec3 wax = vec3(0.0, 0.0, 0.0);
     vec3 specular = vec3(0.0, 0.0, 0.0);
 	vec4 reflection = vec4(0.0,0.0,0.0,0.0);
-	vec4 refraction = vec4(0.0,0.0,0.0,0.0);
 	
 	vec3 reflectedDirection = -reflect(Veye, Neye);
-	vec3 refractedDirection = -refract(Veye,Neye,0.75);
 
 	float m = 2.0 * sqrt(pow(reflectedDirection.x, 2.0) + pow (reflectedDirection.y, 2.0) + pow(reflectedDirection.z+1.0 , 2.0));
 	
 	reflection = texture(uterusTexture,reflectedDirection.xy/m+0.5);
-	refraction = texture(uterusTexture,refractedDirection.xy/m+0.5);
-	
+
 	BASE_COLOR *= reflection;
-	//BASE_COLOR *= refraction;
 	
 	vec3 ambient = AMBIENT_COEFF * vec3(1.0, 1.0, 1.0);
 	ambient *= BASE_COLOR.rgb;
-	//ambient *= reflection.rgb;
 
     for(int i = 0; i < NUM_LIGHTS; i++) {
 
