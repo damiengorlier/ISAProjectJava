@@ -9,7 +9,7 @@ const vec3 LIGHT_COLOR = vec3(1.0, 1.0, 1.0);
 const vec3 SPECULAR_COLOR = vec3(0.9, 0.9, 0.9);
 const float SHININESS_COEFF = 200.0;
 const float LIGHT_RADIUS = 15;
-const float AMBIENT_COEFF = 0.1;
+const float AMBIENT_COEFF = 0.4;
 
 // Attenuation factors : 1 / (Kc + Kl * dist + Kq * dist²)
 const float Kc = 1.0;
@@ -24,7 +24,6 @@ varying vec2 vTexCoord;
 varying vec3 vLightPositionMV[NUM_LIGHTS];
 
 float distanceAttenuation(vec3 lightVector);
-float halfLambert(vec3 vect1, vec3 vect2);
 
 void main()
 {
@@ -60,8 +59,7 @@ void main()
         vec3 Heye = normalize(Leye + Veye);
 
         // N.L
-//        float NdotL = dot(normal, Leye);
-        float NdotL = halfLambert(Leye,normal);
+        float NdotL = dot(normal, Leye);
 
         // Compute N.H
         float NdotH = dot(normal, Heye);
@@ -78,10 +76,4 @@ float distanceAttenuation(vec3 lightVector) {
     float dist = length(lightVector);
     float attFactor = 1.0 / (Kc + Kl * dist + Kq * dist * dist);
     return attFactor;
-}
-
-float halfLambert(vec3 vect1, vec3 vect2)
-{
-    float product = dot(vect1,vect2);
-    return product * 0.5 + 0.5;
 }
