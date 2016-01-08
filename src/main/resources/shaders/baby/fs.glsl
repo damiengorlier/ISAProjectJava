@@ -11,7 +11,7 @@ const float MATERIAL_THICKENESS = 0.6;
 const vec3 EXTINCTION_COEFF = vec3(0.8, 0.12, 0.2);
 const vec3 SPECULAR_COLOR = vec3(0.9, 0.9, 0.9);
 const float RIM_SCALAR = 1.0;
-const float LIGHT_RADIUS = 15;
+const float LIGHT_RADIUS = 7;
 const float AMBIENT_COEFF = 0.4;
 
 // Attenuation factors : 1 / (Kc + Kl * dist + Kq * distÂ²)
